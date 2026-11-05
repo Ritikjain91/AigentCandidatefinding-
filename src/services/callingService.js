@@ -266,6 +266,18 @@ class CallingService {
     const cleanTarget = targetPhone.replace(/[^0-9]/g, '').slice(-10);
     const isTestCall = cleanTarget === cleanUserSim || (dm && dm.isTestLead);
 
+    // Resolve target company details & website
+    let company = null;
+    if (dm && dm.companyId) {
+      company = storage.getCompanyById(dm.companyId);
+    }
+    if (!company && targetCompany) {
+      company = (storage.getCompanies() || []).find(c => c.name && c.name.toLowerCase() === targetCompany.toLowerCase());
+    }
+
+    const companyWebsite = company ? (company.website || (company.domain ? 'https://' + company.domain : '')) : (dm && dm.sourceUrl && dm.sourceUrl.startsWith('http') ? dm.sourceUrl : '');
+    const companyDomain = company ? (company.domain || (companyWebsite ? companyWebsite.replace(/^https?:\/\/(www\.)?/, '').split('/')[0] : '')) : '';
+
     // Enforcement: Maximum 2 calls per company/decision-maker (exempt for user testing line)
     const currentCallCount = storage.getCallCountForContact({
       decisionMakerId,
@@ -314,7 +326,14 @@ class CallingService {
       targetName: dm ? dm.fullName : 'Prospect',
       targetDesignation: dm ? dm.designation : '',
       targetCompany: dm ? dm.companyName : '',
-      companyId: dm ? dm.companyId : null,
+      companyId: dm ? dm.companyId : (company ? company.id : null),
+      companyWebsite,
+      companyDomain,
+      companyIndustry: company ? company.industry : null,
+      companyCity: company ? company.city : null,
+      companyScale: company ? company.scale : null,
+      companyScaleLabel: company ? company.scaleLabel : null,
+      companyNotes: company ? company.notes : null,
       decisionMakerId: dm ? dm.id : null,
       dialTelUri: telUri,
       whatsappDialUri: whatsappCallUri,
@@ -483,6 +502,18 @@ class CallingService {
     const cleanTarget = targetPhone.replace(/[^0-9]/g, '').slice(-10);
     const isTestCall = cleanTarget === cleanUserSim || (dm && dm.isTestLead);
 
+    // Resolve target company details & website
+    let company = null;
+    if (dm && dm.companyId) {
+      company = storage.getCompanyById(dm.companyId);
+    }
+    if (!company && targetCompany) {
+      company = (storage.getCompanies() || []).find(c => c.name && c.name.toLowerCase() === targetCompany.toLowerCase());
+    }
+
+    const companyWebsite = company ? (company.website || (company.domain ? 'https://' + company.domain : '')) : (dm && dm.sourceUrl && dm.sourceUrl.startsWith('http') ? dm.sourceUrl : '');
+    const companyDomain = company ? (company.domain || (companyWebsite ? companyWebsite.replace(/^https?:\/\/(www\.)?/, '').split('/')[0] : '')) : '';
+
     // Enforcement: Maximum 2 calls per company/decision-maker (exempt for user testing line)
     const currentCallCount = storage.getCallCountForContact({
       decisionMakerId,
@@ -581,7 +612,14 @@ Always ask for explicit consent before sending the onboarding link to WhatsApp.`
       targetCompany,
       targetDesignation,
       decisionMakerId: dm ? dm.id : null,
-      companyId: dm ? dm.companyId : null,
+      companyId: dm ? dm.companyId : (company ? company.id : null),
+      companyWebsite,
+      companyDomain,
+      companyIndustry: company ? company.industry : null,
+      companyCity: company ? company.city : null,
+      companyScale: company ? company.scale : null,
+      companyScaleLabel: company ? company.scaleLabel : null,
+      companyNotes: company ? company.notes : null,
       referralUrl: refConfig.officialUrl,
       referralCode: refConfig.referralCode,
       dialogTurns,

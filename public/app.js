@@ -388,6 +388,8 @@ function renderDecisionMakerRow(dm) {
   const sourceLink = dm.sourceUrl ? `<a href="${dm.sourceUrl}" target="_blank" class="text-slate-400 hover:text-amber-300 text-xs flex items-center gap-1 max-w-[130px] truncate" title="${dm.sourceUrl}"><i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> ${dm.sourceUrl.replace(/^https?:\/\//, '')}</a>` : `<span class="text-slate-500 text-xs">-</span>`;
 
   const comp = state.companies.find(c => c.id === dm.companyId || c.name.toLowerCase() === dm.companyName.toLowerCase());
+  const compWebsite = (comp && comp.website) ? comp.website : (comp && comp.domain ? (comp.domain.startsWith('http') ? comp.domain : `https://${comp.domain}`) : (dm.sourceUrl && dm.sourceUrl.startsWith('http') ? dm.sourceUrl : ''));
+  const compDomain = (comp && comp.domain) ? comp.domain : (compWebsite ? compWebsite.replace(/^https?:\/\/(www\.)?/, '').split('/')[0] : '');
   let scaleBadge = '';
   if (comp && comp.scaleLabel) {
     const badgeColor = comp.scale === 'small'
@@ -445,7 +447,31 @@ function renderDecisionMakerRow(dm) {
         <div class="text-slate-300 font-medium text-xs mt-0.5">${dm.designation}</div>
       </td>
       <td class="py-2.5 px-3">
-        <span class="font-semibold text-slate-200">${dm.companyName}</span>
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <span class="font-semibold text-slate-200">${dm.companyName}</span>
+          ${comp ? `
+            <button onclick="openProspectProfile('${comp.id}')" class="text-amber-300 hover:text-amber-200 text-[10px] bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 px-1.5 py-0.5 rounded transition inline-flex items-center gap-1" title="Go through company profile, notes, and contacts">
+              <i class="fa-solid fa-building text-[9px]"></i> Company Details
+            </button>
+          ` : `
+            <button onclick="openProspectProfileByName('${encodeURIComponent(dm.companyName)}')" class="text-amber-300 hover:text-amber-200 text-[10px] bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 px-1.5 py-0.5 rounded transition inline-flex items-center gap-1" title="Go through company profile">
+              <i class="fa-solid fa-building text-[9px]"></i> Company Details
+            </button>
+          `}
+        </div>
+        ${compWebsite ? `
+          <div class="mt-1">
+            <a href="${compWebsite}" target="_blank" rel="noopener noreferrer" class="text-cyan-400 hover:text-cyan-300 font-mono text-[11px] inline-flex items-center gap-1 hover:underline bg-cyan-950/40 border border-cyan-500/30 px-1.5 py-0.5 rounded shadow-sm" title="Visit & Explore ${dm.companyName} official website (${compWebsite})">
+              <i class="fa-solid fa-globe text-[10px] text-cyan-400"></i> ${compDomain || 'Visit Website'} <i class="fa-solid fa-arrow-up-right-from-square text-[8px] text-cyan-400/80"></i>
+            </a>
+          </div>
+        ` : `
+          <div class="mt-1">
+            <a href="https://www.google.com/search?q=${encodeURIComponent(dm.companyName + ' website')}" target="_blank" rel="noopener noreferrer" class="text-slate-400 hover:text-amber-300 text-[10px] inline-flex items-center gap-1 hover:underline bg-slate-800/60 border border-slate-700 px-1.5 py-0.5 rounded" title="Search ${dm.companyName} on Google">
+              <i class="fa-brands fa-google text-[9px]"></i> Search Website
+            </a>
+          </div>
+        `}
         ${scaleBadge}
         ${callBadge}
       </td>
@@ -737,12 +763,25 @@ function renderCompanies() {
   }
 
   container.innerHTML = state.companies.map(comp => {
+    const compWebsite = comp.website || (comp.domain ? (comp.domain.startsWith('http') ? comp.domain : `https://${comp.domain}`) : '');
+    const cleanDomain = comp.domain || (compWebsite ? compWebsite.replace(/^https?:\/\/(www\.)?/, '').split('/')[0] : 'No website');
+
     return `
       <div class="bg-slate-800/80 border border-slate-700/60 rounded-xl p-5 hover:border-slate-600 transition shadow-sm space-y-4">
         <div class="flex items-start justify-between">
           <div>
             <h3 class="font-bold text-white text-base">${comp.name}</h3>
-            <p class="text-xs text-indigo-400">${comp.domain || 'No domain'} &bull; ${comp.industry}</p>
+            <div class="flex items-center gap-2 mt-0.5 text-xs">
+              ${compWebsite ? `
+                <a href="${compWebsite}" target="_blank" rel="noopener noreferrer" class="text-cyan-400 hover:text-cyan-300 font-mono inline-flex items-center gap-1 hover:underline" title="Visit official website">
+                  <i class="fa-solid fa-globe text-[11px]"></i> ${cleanDomain} <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                </a>
+              ` : `
+                <span class="text-slate-400">${cleanDomain}</span>
+              `}
+              <span class="text-slate-500">&bull;</span>
+              <span class="text-slate-300">${comp.industry}</span>
+            </div>
           </div>
           <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-700 text-slate-300">
             ${comp.city || 'India'}
@@ -771,9 +810,18 @@ function renderCompanies() {
           <span class="text-[11px] text-emerald-400 font-semibold">
             <i class="fa-solid fa-check"></i> ${comp.verifiedCount || 0} verified
           </span>
-          <div class="flex items-center gap-2">
-            <button onclick="openProspectProfile('${comp.id}')" class="bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 px-3 py-1.5 rounded text-xs transition">
-              View Profile
+          <div class="flex items-center gap-2 flex-wrap">
+            ${compWebsite ? `
+              <a href="${compWebsite}" target="_blank" rel="noopener noreferrer" class="bg-cyan-600/20 hover:bg-cyan-600/40 text-cyan-300 border border-cyan-500/40 px-2.5 py-1.5 rounded text-xs transition inline-flex items-center gap-1" title="Visit ${comp.name} website">
+                <i class="fa-solid fa-globe"></i> Website
+              </a>
+            ` : `
+              <a href="https://www.google.com/search?q=${encodeURIComponent(comp.name + ' website')}" target="_blank" rel="noopener noreferrer" class="bg-slate-700/60 hover:bg-slate-700 text-slate-300 border border-slate-600 px-2.5 py-1.5 rounded text-xs transition inline-flex items-center gap-1" title="Search website on Google">
+                <i class="fa-brands fa-google text-amber-400"></i> Website
+              </a>
+            `}
+            <button onclick="openProspectProfile('${comp.id}')" class="bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 px-3 py-1.5 rounded text-xs transition inline-flex items-center gap-1" title="Go through company profile & contacts">
+              <i class="fa-solid fa-building text-[10px]"></i> Profile
             </button>
             <button onclick="openShareModalForCompany('${comp.name}')" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 px-3 py-1.5 rounded text-xs transition" title="Share Go Extra Mile Referral Link">
               <i class="fa-solid fa-share-nodes"></i> Link
@@ -830,16 +878,88 @@ async function saveCompanyForm() {
   }
 }
 
-// Prospect Profile Modal
+// Prospect Profile Modal ("Go Through Company")
 async function openProspectProfile(companyId) {
   state.activeCompanyForProfile = companyId;
-  const comp = state.companies.find(c => c.id === companyId);
-  if (!comp) return;
+  let comp = state.companies.find(c => c.id === companyId || (c.name && c.name.toLowerCase() === String(companyId).toLowerCase()));
+  
+  if (!comp) {
+    // Attempt lookup from decision-makers list
+    const dm = state.decisionMakers.find(d => d.companyId === companyId || (d.companyName && d.companyName.toLowerCase() === String(companyId).toLowerCase()));
+    if (dm) {
+      comp = {
+        id: dm.companyId || `comp_${Date.now()}`,
+        name: dm.companyName,
+        domain: (dm.sourceUrl || '').replace(/^https?:\/\/(www\.)?/, '').split('/')[0] || '',
+        website: dm.sourceUrl && dm.sourceUrl.startsWith('http') ? dm.sourceUrl : '',
+        industry: 'Retail & Consumer Goods',
+        city: 'Pan-India',
+        notes: `Autonomous lead discovered for Go Extra Mile merchant listings. Decision-maker: ${dm.fullName} (${dm.designation}).`,
+        scale: 'mid',
+        scaleLabel: 'Merchant Prospect',
+        status: 'Active Prospect'
+      };
+    }
+  }
+
+  if (!comp) {
+    showToast('Company profile details not found', 'warning');
+    return;
+  }
+
+  const websiteUrl = comp.website || (comp.domain ? (comp.domain.startsWith('http') ? comp.domain : `https://${comp.domain}`) : '');
+  const cleanDomain = comp.domain || (websiteUrl ? websiteUrl.replace(/^https?:\/\/(www\.)?/, '').split('/')[0] : 'No website');
 
   document.getElementById('profileCompanyTitle').innerText = comp.name;
-  document.getElementById('profileCompanyDomain').innerText = `${comp.domain || 'No website'} &bull; ${comp.industry || 'Retail'} &bull; ${comp.city || ''}`;
+  document.getElementById('profileCompanyDomain').innerHTML = `<span>${cleanDomain}</span> &bull; <span>${comp.industry || 'Retail'}</span> &bull; <span>${comp.city || 'India'}</span>`;
 
-  const dms = state.decisionMakers.filter(dm => dm.companyId === comp.id);
+  // Top Action Buttons: Official Website & Google Search
+  const webBtn = document.getElementById('profileCompanyWebsiteBtn');
+  const webBtnText = document.getElementById('profileWebsiteBtnText');
+  if (webBtn) {
+    if (websiteUrl) {
+      webBtn.href = websiteUrl;
+      webBtn.title = `Visit official website of ${comp.name} (${websiteUrl})`;
+      if (webBtnText) webBtnText.innerText = `Visit ${cleanDomain}`;
+    } else {
+      webBtn.href = `https://www.google.com/search?q=${encodeURIComponent(comp.name + ' official website')}`;
+      webBtn.title = `Search ${comp.name} website on Google`;
+      if (webBtnText) webBtnText.innerText = 'Search Website';
+    }
+  }
+
+  const searchBtn = document.getElementById('profileCompanySearchBtn');
+  if (searchBtn) {
+    searchBtn.href = `https://www.google.com/search?q=${encodeURIComponent(comp.name + ' store locations offers deals')}`;
+  }
+
+  // Populate Company Intel & Strategic Pitch Card
+  const indEl = document.getElementById('profileCompanyIndustry');
+  if (indEl) indEl.innerText = comp.industry || 'Retail & Consumer Goods';
+
+  const cityEl = document.getElementById('profileCompanyCity');
+  if (cityEl) cityEl.innerText = comp.city || 'Pan-India';
+
+  const domBadge = document.getElementById('profileCompanyDomainBadge');
+  if (domBadge) {
+    domBadge.innerText = cleanDomain;
+    domBadge.href = websiteUrl || `https://www.google.com/search?q=${encodeURIComponent(comp.name)}`;
+  }
+
+  const statusEl = document.getElementById('profileCompanyStatus');
+  if (statusEl) statusEl.innerText = comp.status || 'Active Prospect';
+
+  const scaleEl = document.getElementById('profileCompanyScaleBadge');
+  if (scaleEl) {
+    scaleEl.innerText = comp.scaleLabel || (comp.scale === 'big' ? 'Enterprise Brand' : comp.scale === 'small' ? 'SMB Retailer' : 'National Merchant');
+  }
+
+  const notesEl = document.getElementById('profileCompanyNotes');
+  if (notesEl) {
+    notesEl.innerText = comp.notes || `Go Extra Mile merchant pitch: Connects ${comp.name} with thousands of active buyers with 0% upfront listing fees, exclusive deals, and high margin control.`;
+  }
+
+  const dms = state.decisionMakers.filter(dm => dm.companyId === comp.id || (dm.companyName && dm.companyName.toLowerCase() === comp.name.toLowerCase()));
   const container = document.getElementById('profileDmsList');
 
   if (dms.length === 0) {
@@ -906,6 +1026,44 @@ function openShareModalForCompany(companyName) {
   openShareModal();
   document.getElementById('shareCompanyName').value = companyName;
   updateSharePreview();
+}
+
+function openProspectProfileByName(name) {
+  const decoded = decodeURIComponent(name || '');
+  const comp = state.companies.find(c => c.name && c.name.toLowerCase() === decoded.toLowerCase());
+  if (comp) {
+    openProspectProfile(comp.id);
+  } else {
+    openProspectProfile(decoded);
+  }
+}
+
+function openProfileForCurrentAutoCall() {
+  if (!activeAutoCallData) return;
+  const compId = activeAutoCallData.companyId;
+  const compName = activeAutoCallData.targetCompany;
+  const comp = state.companies.find(c => (compId && c.id === compId) || (compName && c.name && c.name.toLowerCase() === compName.toLowerCase()));
+  if (comp) {
+    openProspectProfile(comp.id);
+  } else if (compName) {
+    openProspectProfileByName(compName);
+  } else {
+    showToast('Company profile not found', 'warning');
+  }
+}
+
+function openProfileForCurrentActiveCall() {
+  if (!activeCallSessionData) return;
+  const compId = activeCallSessionData.companyId;
+  const compName = activeCallSessionData.targetCompany;
+  const comp = state.companies.find(c => (compId && c.id === compId) || (compName && c.name && c.name.toLowerCase() === compName.toLowerCase()));
+  if (comp) {
+    openProspectProfile(comp.id);
+  } else if (compName) {
+    openProspectProfileByName(compName);
+  } else {
+    showToast('Company profile not found', 'warning');
+  }
 }
 
 // ==========================================
@@ -1301,6 +1459,25 @@ function renderActiveCallModal(sess) {
   document.getElementById('activeCallTargetName').innerText = sess.targetName;
   document.getElementById('activeCallTargetRole').innerText = `${sess.targetDesignation || 'Executive'} • ${sess.targetCompany || 'Merchant'}`;
   document.getElementById('activeCallTargetPhone').innerText = sess.targetNumber;
+
+  // Company Website & Profile Link
+  const comp = state.companies.find(c => (sess.companyId && c.id === sess.companyId) || (sess.targetCompany && c.name && c.name.toLowerCase() === sess.targetCompany.toLowerCase()));
+  const compWebsite = sess.companyWebsite || (comp && comp.website) || (comp && comp.domain ? `https://${comp.domain}` : '');
+  const compDomain = sess.companyDomain || (comp && comp.domain) || (compWebsite ? compWebsite.replace(/^https?:\/\/(www\.)?/, '').split('/')[0] : '');
+
+  const activeWebBtn = document.getElementById('activeCallCompanyWebsiteLink');
+  const activeWebText = document.getElementById('activeCallWebsiteText');
+  if (activeWebBtn) {
+    if (compWebsite) {
+      activeWebBtn.href = compWebsite;
+      activeWebBtn.title = `Visit official website of ${sess.targetCompany} (${compWebsite})`;
+      if (activeWebText) activeWebText.innerText = `Visit ${compDomain || 'Website'}`;
+    } else {
+      activeWebBtn.href = `https://www.google.com/search?q=${encodeURIComponent((sess.targetCompany || '') + ' official website')}`;
+      activeWebBtn.title = `Search ${sess.targetCompany} website on Google`;
+      if (activeWebText) activeWebText.innerText = 'Search Company Website';
+    }
+  }
 
   // Direct Dial Links
   const dialBtn = document.getElementById('btnDirectDialTel');
@@ -1881,6 +2058,28 @@ function launchAutoCallSession(callData, realCallData = null) {
   document.getElementById('autoCallTargetName').innerText = callData.targetName;
   document.getElementById('autoCallTargetDesignation').innerText = `${callData.targetDesignation} • ${callData.targetCompany}`;
   document.getElementById('autoCallTargetPhone').innerText = callData.targetNumber;
+
+  // Target Company Website & Profile Link
+  const comp = state.companies.find(c => (callData.companyId && c.id === callData.companyId) || (callData.targetCompany && c.name && c.name.toLowerCase() === callData.targetCompany.toLowerCase()));
+  const compWebsite = callData.companyWebsite || (comp && comp.website) || (comp && comp.domain ? `https://${comp.domain}` : '');
+  const compDomain = callData.companyDomain || (comp && comp.domain) || (compWebsite ? compWebsite.replace(/^https?:\/\/(www\.)?/, '').split('/')[0] : '');
+
+  const autoCompEl = document.getElementById('autoCallTargetCompName');
+  if (autoCompEl) autoCompEl.innerText = callData.targetCompany || 'Merchant';
+
+  const autoWebBtn = document.getElementById('autoCallCompanyWebsiteBtn');
+  const autoWebText = document.getElementById('autoCallWebsiteText');
+  if (autoWebBtn) {
+    if (compWebsite) {
+      autoWebBtn.href = compWebsite;
+      autoWebBtn.title = `Visit official website of ${callData.targetCompany} (${compWebsite})`;
+      if (autoWebText) autoWebText.innerText = `Visit ${compDomain || 'Website'}`;
+    } else {
+      autoWebBtn.href = `https://www.google.com/search?q=${encodeURIComponent((callData.targetCompany || '') + ' official website')}`;
+      autoWebBtn.title = `Search ${callData.targetCompany} website on Google`;
+      if (autoWebText) autoWebText.innerText = 'Search Company Website';
+    }
+  }
 
   // Caller ID Display
   const isUnknown = callData.isUnknownNumber !== false;

@@ -610,6 +610,32 @@ async function runTests() {
     }, /Contact Frequency Limit Reached/);
   });
 
+  await test('Requirement: Calling bot and sessions provide company website and intel to go through company', async () => {
+    const dms = dmService.getAll();
+    const dmWithComp = dms.find(d => d.companyId) || dms[0];
+    assert.ok(dmWithComp, 'Must have at least one decision-maker in database');
+
+    const callSess = callingService.initiateCallSession({ decisionMakerId: dmWithComp.id, forceOverride: true });
+    assert.ok(callSess.companyId !== undefined, 'Call session must provide companyId');
+    assert.ok(typeof callSess.companyWebsite === 'string', 'Call session must provide companyWebsite string');
+    assert.ok(typeof callSess.companyDomain === 'string', 'Call session must provide companyDomain string');
+
+    const autoSess = callingService.initiateAutomatedAiCall({ decisionMakerId: dmWithComp.id, forceOverride: true });
+    assert.ok(autoSess.companyId !== undefined, 'Auto-call session must provide companyId');
+    assert.ok(typeof autoSess.companyWebsite === 'string', 'Auto-call session must provide companyWebsite string');
+    assert.ok(typeof autoSess.companyDomain === 'string', 'Auto-call session must provide companyDomain string');
+  });
+
+  await test('Requirement: Discovered companies store website address and deal listing notes', async () => {
+    const companies = storage.getCompanies();
+    assert.ok(companies.length > 0, 'Companies must exist in database');
+
+    const compWithWeb = companies.find(c => c.website || c.domain);
+    assert.ok(compWithWeb, 'At least one company must have an official website or domain');
+    assert.ok(compWithWeb.name, 'Company must have a valid name');
+    assert.ok(compWithWeb.notes || compWithWeb.industry, 'Company must have notes or industry for exploring');
+  });
+
   console.log(`\n========================================`);
   console.log(`Total tests: ${passed + failed}`);
   console.log(`Passed: ${passed}`);
