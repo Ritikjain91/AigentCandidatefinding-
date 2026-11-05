@@ -122,7 +122,7 @@ class CallingService {
       const params = new URLSearchParams({
         To: formattedTarget,
         From: twilioFrom,
-        Twiml: twiml
+        Url: 'https://twimlets.com/echo?Twiml=' + encodeURIComponent(twiml)
       });
 
       const basicAuth = Buffer.from(`${twilioSid}:${twilioToken}`).toString('base64');
@@ -414,7 +414,7 @@ class CallingService {
       const params = new URLSearchParams({
         To: formattedUser,
         From: twilioFrom,
-        Twiml: bridgeTwiml
+        Url: 'https://twimlets.com/echo?Twiml=' + encodeURIComponent(bridgeTwiml)
       });
 
       const basicAuth = Buffer.from(`${twilioSid}:${twilioToken}`).toString('base64');

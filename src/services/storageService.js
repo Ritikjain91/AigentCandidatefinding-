@@ -136,6 +136,10 @@ class StorageService {
       current.autoReplenish = { ...current.autoReplenish, ...updates.autoReplenish };
     }
 
+    if (updates.telephony) {
+      current.telephony = { ...(current.telephony || {}), ...updates.telephony };
+    }
+
     fs.writeFileSync(CONFIG_PATH, JSON.stringify(current, null, 2), 'utf-8');
     return current;
   }
