@@ -491,6 +491,15 @@
             <option value="Verified">Verified Only</option>
             <option value="Unverified">Unverified Only</option>
           </select>
+
+          <!-- Call Frequency Filter (Max 2 Attempts Rule) -->
+          <select id="dmCallFilter" onchange="filterDecisionMakers()" class="bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500">
+            <option value="">All Call Frequencies (Max 2x Rule)</option>
+            <option value="eligible">Eligible for Calling (&lt; 2 Calls)</option>
+            <option value="fresh">Fresh Only (0 Calls Made)</option>
+            <option value="followup">1 Call Made (Follow-up OK)</option>
+            <option value="limitReached">Max Calls Reached (2/2 - Excluded)</option>
+          </select>
         </div>
 
         <div class="text-xs text-slate-400">

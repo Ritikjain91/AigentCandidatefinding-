@@ -532,6 +532,84 @@ async function runTests() {
     assert.notStrictEqual(lead2.company.domain.toLowerCase(), lead3.company.domain.toLowerCase());
   });
 
+  // TEST 31: Maximum 2-Call Contact Frequency Enforcement (Rule: Only 2 Calls Max, Then Excluded)
+  await test('Requirement: Maximum 2-call cap per prospect - 3rd call rejected and excluded from auto queue', () => {
+    // 1. Create a dedicated test company & decision-maker with unique test coordinates
+    const salt = Date.now().toString().slice(-6);
+    const testPhone = `+91 97${Math.floor(10000000 + Math.random() * 90000000)}`;
+    const comp = storage.addCompany({
+      name: `Vedic Herbs Lab ${salt}`,
+      domain: `vedicherbslab${salt}.in`,
+      industry: 'Health & Wellness',
+      scale: 'small'
+    });
+    const dm = dmService.create({
+      companyId: comp.id,
+      companyName: comp.name,
+      fullName: `Dr. Sunil Kashyap ${salt}`,
+      designation: 'Managing Director & Founder',
+      phone: testPhone,
+      email: `sunil${salt}@vedicherbslab.in`,
+      sourceUrl: `https://vedicherbslab${salt}.in/founders`,
+      verificationStatus: 'Verified'
+    });
+
+    // 0 Calls: Fresh lead (Attempt 1 eligible)
+    let queue = callingService.getAutoDialQueue();
+    let inQueue = queue.find(q => q.id === dm.id);
+    assert.ok(inQueue, 'Lead with 0 calls should be in auto-dial queue');
+    assert.strictEqual(inQueue.callCount, 0);
+    assert.strictEqual(inQueue.remainingAttempts, 2);
+    assert.strictEqual(storage.isCallLimitReached({ decisionMakerId: dm.id }), false);
+
+    // 1st Call: Log Call 1
+    const call1 = callingService.initiateAutomatedAiCall({ decisionMakerId: dm.id });
+    storage.logCall({
+      decisionMakerId: dm.id,
+      companyId: comp.id,
+      targetCompany: comp.name,
+      targetPhone: dm.phone,
+      callerIdMode: 'user-sim',
+      outcome: 'No Answer / Reschedule'
+    });
+
+    assert.strictEqual(storage.getCallCountForContact({ decisionMakerId: dm.id }), 1);
+    queue = callingService.getAutoDialQueue();
+    inQueue = queue.find(q => q.id === dm.id);
+    assert.ok(inQueue, 'Lead with 1 call should still be eligible for 2nd follow-up call');
+    assert.strictEqual(inQueue.callCount, 1);
+    assert.strictEqual(inQueue.remainingAttempts, 1);
+    assert.strictEqual(storage.isCallLimitReached({ decisionMakerId: dm.id }), false);
+
+    // 2nd Call: Log Call 2
+    const call2 = callingService.initiateAutomatedAiCall({ decisionMakerId: dm.id });
+    storage.logCall({
+      decisionMakerId: dm.id,
+      companyId: comp.id,
+      targetCompany: comp.name,
+      targetPhone: dm.phone,
+      callerIdMode: 'unknown',
+      outcome: 'Pitch Delivered - Follow-up Link Sent'
+    });
+
+    assert.strictEqual(storage.getCallCountForContact({ decisionMakerId: dm.id }), 2);
+    assert.strictEqual(storage.isCallLimitReached({ decisionMakerId: dm.id }), true);
+
+    // Excluded from queue after 2 calls
+    queue = callingService.getAutoDialQueue();
+    inQueue = queue.find(q => q.id === dm.id);
+    assert.strictEqual(inQueue, undefined, 'Lead with 2 calls must be strictly EXCLUDED from auto-dial queue');
+
+    // 3rd Call attempt must be rejected with Contact Frequency Limit Reached error
+    assert.throws(() => {
+      callingService.initiateAutomatedAiCall({ decisionMakerId: dm.id });
+    }, /Contact Frequency Limit Reached/);
+
+    assert.throws(() => {
+      callingService.initiateCallSession({ decisionMakerId: dm.id });
+    }, /Contact Frequency Limit Reached/);
+  });
+
   console.log(`\n========================================`);
   console.log(`Total tests: ${passed + failed}`);
   console.log(`Passed: ${passed}`);

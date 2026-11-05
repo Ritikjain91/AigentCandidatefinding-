@@ -950,8 +950,8 @@ class ResearchService {
     ];
 
     const designations = {
-      small: ['Owner & Managing Director', 'Proprietor & Founder', 'Founder & Director', 'Managing Partner'],
-      mid: ['Co-Founder & CEO', 'Founder & Managing Director', 'Chief Executive Officer (CEO)', 'Founder & CMO'],
+      small: ['Owner & Managing Director', 'Proprietor & Founder', 'Founder & Director', 'Managing Partner & Owner'],
+      mid: ['Co-Founder & CEO', 'Founder & Managing Director', 'Chief Executive Officer (CEO)', 'Managing Director & Founder'],
       big: ['Managing Director & CEO', 'Chief Executive Officer (CEO)', 'Executive Director & MD', 'Managing Director (MD)']
     };
 
@@ -1052,8 +1052,15 @@ class ResearchService {
    */
   oneClickDiscoverCompanies({ scale = 'all', count = 1, category = 'all' } = {}) {
     const existingCompanies = storage.getCompanies();
+    const existingCalls = storage.getCalls();
     const existingNames = new Set(existingCompanies.map(c => c.name.toLowerCase()));
     const existingDomains = new Set(existingCompanies.map(c => (c.domain || '').toLowerCase()));
+
+    // Never re-discover companies that have already been called
+    for (const c of existingCalls) {
+      if (c.companyName) existingNames.add(c.companyName.toLowerCase().trim());
+      if (c.targetCompany) existingNames.add(c.targetCompany.toLowerCase().trim());
+    }
 
     const allArchetypes = this.getAllDiverseArchetypes();
 

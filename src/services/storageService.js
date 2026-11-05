@@ -184,10 +184,43 @@ class StorageService {
     return true;
   }
 
-  // Call Logs
+  // Call Logs & Frequency Enforcement (Max 2 Attempts per Prospect)
+  MAX_CALLS_PER_PROSPECT = 2;
+
   getCalls() {
     const db = this.readDb();
     return db.calls || [];
+  }
+
+  getCallCountForContact({ decisionMakerId, companyId, phone }) {
+    const db = this.readDb();
+    const calls = db.calls || [];
+    let count = 0;
+
+    const cleanTargetPhone = phone ? phone.replace(/[^0-9]/g, '').slice(-10) : null;
+
+    for (const c of calls) {
+      if (decisionMakerId && c.decisionMakerId === decisionMakerId) {
+        count++;
+        continue;
+      }
+      if (companyId && c.companyId === companyId) {
+        count++;
+        continue;
+      }
+      if (cleanTargetPhone && (c.targetNumber || c.targetPhone || c.customPhone)) {
+        const cPhone = (c.targetNumber || c.targetPhone || c.customPhone).replace(/[^0-9]/g, '').slice(-10);
+        if (cPhone === cleanTargetPhone) {
+          count++;
+        }
+      }
+    }
+
+    return count;
+  }
+
+  isCallLimitReached({ decisionMakerId, companyId, phone }) {
+    return this.getCallCountForContact({ decisionMakerId, companyId, phone }) >= this.MAX_CALLS_PER_PROSPECT;
   }
 
   logCall(call) {
@@ -200,12 +233,33 @@ class StorageService {
     };
     db.calls.unshift(newCall);
 
-    // Update company status if call outcome leads to progress
-    if (call.companyId && call.outcome) {
+    // Track calls on Decision Maker
+    if (call.decisionMakerId) {
+      const dm = (db.decisionMakers || []).find(d => d.id === call.decisionMakerId);
+      if (dm) {
+        dm.callCount = (dm.callCount || 0) + 1;
+        dm.lastCalledAt = newCall.calledAt;
+        dm.lastOutcome = call.outcome || 'Call Completed';
+        if (dm.callCount >= this.MAX_CALLS_PER_PROSPECT) {
+          dm.callLimitReached = true;
+        }
+      }
+    }
+
+    // Track calls on Company and update status
+    if (call.companyId) {
       const comp = (db.companies || []).find(c => c.id === call.companyId);
       if (comp) {
-        comp.status = call.outcome === 'Interested' ? 'Qualified - Follow-up' : 'Call Completed';
-        comp.lastContactedAt = new Date().toISOString();
+        comp.callCount = (comp.callCount || 0) + 1;
+        comp.lastContactedAt = newCall.calledAt;
+        if (call.outcome === 'Interested') {
+          comp.status = 'Qualified - Interested';
+        } else if (comp.callCount >= this.MAX_CALLS_PER_PROSPECT) {
+          comp.status = 'Max Calls Reached (2/2 - Excluded)';
+          comp.callLimitReached = true;
+        } else {
+          comp.status = `Contacted (${comp.callCount}/2 Attempts)`;
+        }
       }
     }
 

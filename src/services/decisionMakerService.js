@@ -14,8 +14,8 @@ class DecisionMakerService {
 
     const d = designation.trim().toLowerCase();
 
-    // First preference: Owner, Managing Director (MD), Chief Executive Officer (CEO), Founder / Co-Founder, Chairman
-    if (d.includes('owner') || d.includes('proprietor')) {
+    // First preference: Owner, Managing Director (MD), Chief Executive Officer (CEO), Founder / Co-Founder, Chairman, Managing Partner, Proprietor
+    if (d.includes('owner') || d.includes('proprietor') || d.includes('partner')) {
       return { tier: 1, rank: 1, label: 'Owner (1st Preference)' };
     }
     if (d.includes('managing director') || /\bmd\b/.test(d) || d.includes('executive director')) {
@@ -27,12 +27,12 @@ class DecisionMakerService {
     if (d.includes('founder') || d.includes('co-founder') || d.includes('cofounder')) {
       return { tier: 1, rank: 4, label: 'Founder / Co-Founder (1st Preference)' };
     }
-    if (d.includes('chairman') || d.includes('chairperson')) {
+    if (d.includes('chairman') || d.includes('chairperson') || d.includes('president')) {
       return { tier: 1, rank: 2, label: 'Chairman (1st Preference)' };
     }
 
     // Second preference: Head of Marketing, Marketing Manager
-    if (d.includes('head of marketing') || d.includes('marketing head') || d.includes('vp marketing') || /\bcmo\b/.test(d) || d.includes('chief marketing officer')) {
+    if (d.includes('head of marketing') || d.includes('marketing head') || d.includes('vp marketing') || /\bcmo\b/.test(d) || d.includes('chief marketing officer') || d.includes('director of marketing')) {
       return { tier: 2, rank: 5, label: 'Head of Marketing (2nd Preference)' };
     }
     if (d.includes('marketing manager') || d.includes('marketing lead') || d.includes('growth manager')) {
@@ -45,6 +45,11 @@ class DecisionMakerService {
     }
     if (d.includes('sales manager') || d.includes('sales lead') || d.includes('business development manager') || d.includes('bdm')) {
       return { tier: 3, rank: 8, label: 'Sales Manager (3rd Preference)' };
+    }
+
+    // General Director / Leadership without marketing/sales is Tier 1
+    if (d.includes('director')) {
+      return { tier: 1, rank: 2, label: 'Director (1st Preference)' };
     }
 
     return { tier: 3, rank: 90, label: 'Other Role' };

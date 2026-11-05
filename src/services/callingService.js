@@ -79,7 +79,7 @@ class CallingService {
   }
 
   // Initiate a call session (supports User SIM 8518900153 or Unknown / Masked Caller ID)
-  initiateCallSession({ decisionMakerId, customPhone, callMode = 'device-dialer', callerIdMode = 'user-sim' }) {
+  initiateCallSession({ decisionMakerId, customPhone, callMode = 'device-dialer', callerIdMode = 'user-sim', forceOverride = false }) {
     const caller = this.getCallerProfile();
     let dm = null;
 
@@ -92,6 +92,19 @@ class CallingService {
     }
 
     const targetPhone = dm ? dm.phone : customPhone;
+    const targetCompany = dm ? dm.companyName : 'Company';
+
+    // Enforcement: Maximum 2 calls per company/decision-maker
+    const currentCallCount = storage.getCallCountForContact({
+      decisionMakerId,
+      companyId: dm ? dm.companyId : null,
+      phone: targetPhone
+    });
+
+    if (currentCallCount >= 2 && !forceOverride) {
+      throw new Error(`Contact Frequency Limit Reached: ${targetCompany} has already been called ${currentCallCount} times. A prospect cannot be called more than 2 times.`);
+    }
+
     const cleanTargetPhone = targetPhone.replace(/[^0-9]/g, '');
 
     // Format clean phone
@@ -191,7 +204,7 @@ class CallingService {
   // ==========================================
 
   // Initiate an autonomous voice call session (supports User SIM 8518900153 or Unknown / Masked Caller ID)
-  initiateAutomatedAiCall({ decisionMakerId, customPhone, callerIdMode = 'user-sim' }) {
+  initiateAutomatedAiCall({ decisionMakerId, customPhone, callerIdMode = 'user-sim', forceOverride = false }) {
     const caller = this.getCallerProfile();
     const refConfig = referralService.getReferralConfig();
     let dm = null;
@@ -204,11 +217,23 @@ class CallingService {
       throw new Error('A valid decision-maker or phone number is required for automated calling.');
     }
 
-    const isUnknown = callerIdMode === 'unknown';
-    const targetName = dm ? dm.fullName : 'Business Leader';
-    const targetCompany = dm ? dm.companyName : 'Your Company';
-    const targetDesignation = dm ? dm.designation : 'Executive';
     const targetPhone = dm ? dm.phone : customPhone;
+    const targetCompany = dm ? dm.companyName : 'Your Company';
+    const targetName = dm ? dm.fullName : 'Business Leader';
+
+    // Enforcement: Maximum 2 calls per company/decision-maker
+    const currentCallCount = storage.getCallCountForContact({
+      decisionMakerId,
+      companyId: dm ? dm.companyId : null,
+      phone: targetPhone
+    });
+
+    if (currentCallCount >= 2 && !forceOverride) {
+      throw new Error(`Contact Frequency Limit Reached: ${targetCompany} (${targetName}) has already been called ${currentCallCount} times. A prospect cannot be called more than 2 times.`);
+    }
+
+    const isUnknown = callerIdMode === 'unknown';
+    const targetDesignation = dm ? dm.designation : 'Executive';
 
     // Structured conversational dialog turns for the automated AI voice agent
     const dialogTurns = [
@@ -307,24 +332,52 @@ Always ask for explicit consent before sending the onboarding link to WhatsApp.`
     };
   }
 
-  // Get Queue of prioritized decision-makers for automated dialing
-  getAutoDialQueue(tier = null) {
+  // Get Queue of prioritized decision-makers for automated dialing (Excludes contacts called >= 2 times)
+  getAutoDialQueue(tier = null, maxCalls = 2) {
     let dms = dmService.getAll();
+    const calls = storage.getCalls();
+
+    const callCountMap = new Map();
+    for (const c of calls) {
+      if (c.decisionMakerId) {
+        callCountMap.set(c.decisionMakerId, (callCountMap.get(c.decisionMakerId) || 0) + 1);
+      }
+      if (c.companyId) {
+        callCountMap.set(c.companyId, (callCountMap.get(c.companyId) || 0) + 1);
+      }
+    }
+
     if (tier) {
       dms = dms.filter(d => d.priorityTier === parseInt(tier, 10));
     }
 
+    // Contact Frequency Rule: Exclude contacts who have already reached maxCalls (default: 2 times max)
+    const eligible = dms.filter(d => {
+      const dmCalls = callCountMap.get(d.id) || 0;
+      const compCalls = callCountMap.get(d.companyId) || 0;
+      const totalCalls = Math.max(dmCalls, compCalls);
+      return totalCalls < maxCalls;
+    });
+
     // Prioritize Tier 1 (Owner, MD, CEO, Founder) first, verified first
-    return dms.map(d => ({
-      id: d.id,
-      fullName: d.fullName,
-      designation: d.designation,
-      companyName: d.companyName,
-      phone: d.phone,
-      priorityTier: d.priorityTier,
-      priorityRank: d.priorityRank,
-      verificationStatus: d.verificationStatus
-    }));
+    return eligible.map(d => {
+      const dmCalls = callCountMap.get(d.id) || 0;
+      const compCalls = callCountMap.get(d.companyId) || 0;
+      const totalCalls = Math.max(dmCalls, compCalls);
+      return {
+        id: d.id,
+        companyId: d.companyId,
+        fullName: d.fullName,
+        designation: d.designation,
+        companyName: d.companyName,
+        phone: d.phone,
+        priorityTier: d.priorityTier,
+        priorityRank: d.priorityRank,
+        verificationStatus: d.verificationStatus,
+        callCount: totalCalls,
+        remainingAttempts: Math.max(0, maxCalls - totalCalls)
+      };
+    });
   }
 }
 

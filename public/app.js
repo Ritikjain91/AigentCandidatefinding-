@@ -397,8 +397,42 @@ function renderDecisionMakerRow(dm) {
     scaleBadge = `<div class="mt-0.5"><span class="text-[9px] font-bold px-1.5 py-0.5 rounded border ${badgeColor}">${comp.scaleLabel}</span></div>`;
   }
 
+  // 2-Call Contact Frequency Cap Check
+  const callCount = dm.callCount || 0;
+  const isLimitReached = callCount >= 2;
+  let callBadge = '';
+  if (isLimitReached) {
+    callBadge = `<div class="mt-1"><span class="bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 shadow-sm" title="Contact Frequency Cap: 2 calls reached. Excluded from dialing queues.">
+      <i class="fa-solid fa-ban text-[9px] text-rose-400"></i> Max 2x Limit (Excluded)
+    </span></div>`;
+  } else if (callCount === 1) {
+    callBadge = `<div class="mt-1"><span class="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1" title="1 follow-up call attempt remaining">
+      <i class="fa-solid fa-clock-rotate-left text-[9px] text-amber-400"></i> 1/2 Calls (Follow-up Left)
+    </span></div>`;
+  } else {
+    callBadge = `<div class="mt-1"><span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1" title="Fresh prospect: 2 call attempts remaining">
+      <i class="fa-solid fa-sparkles text-[9px] text-emerald-400"></i> 0/2 Calls (Fresh Lead)
+    </span></div>`;
+  }
+
+  const callButtonsHtml = isLimitReached ? `
+    <button onclick="if(confirm('Notice: ${dm.companyName} has already reached the maximum 2-call limit. Do you wish to override and call anyway?')) startAutomatedCallBot('${dm.id}', 'unknown');" class="bg-slate-800 hover:bg-slate-700 text-slate-400 font-medium px-2 py-1 rounded text-xs transition flex items-center gap-1 border border-slate-700" title="Max 2 calls reached (Click to override)">
+      <i class="fa-solid fa-ban text-rose-400"></i> Called 2x
+    </button>
+    <button onclick="if(confirm('Notice: ${dm.companyName} has already reached the maximum 2-call limit. Do you wish to override and call anyway?')) startCallFromMyNumber('${dm.id}');" class="bg-slate-800 hover:bg-slate-700 text-slate-400 font-medium px-2 py-1 rounded text-xs transition flex items-center gap-1 border border-slate-700" title="Max 2 calls reached (Click to override)">
+      <i class="fa-solid fa-phone text-slate-500"></i> Manual
+    </button>
+  ` : `
+    <button onclick="startAutomatedCallBot('${dm.id}', 'unknown')" class="bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white font-bold px-2 py-1 rounded text-xs transition flex items-center gap-1 shadow-sm" title="Directly call from Unknown Number and AI Bot speaks">
+      <i class="fa-solid fa-user-secret"></i> Bot Call
+    </button>
+    <button onclick="startCallFromMyNumber('${dm.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2 py-1 rounded text-xs transition flex items-center gap-1 shadow-sm" title="Call from your number +91 8518900153">
+      <i class="fa-solid fa-phone"></i> Call
+    </button>
+  `;
+
   return `
-    <tr class="border-b border-slate-700/50 hover:bg-slate-700/30 transition text-xs">
+    <tr class="border-b border-slate-700/50 hover:bg-slate-700/30 transition text-xs ${isLimitReached ? 'opacity-85' : ''}">
       <td class="py-3 px-4">
         <div class="font-bold text-white text-sm flex items-center gap-2">
           ${dm.fullName}
@@ -409,6 +443,7 @@ function renderDecisionMakerRow(dm) {
       <td class="py-3 px-4">
         <span class="font-semibold text-slate-200">${dm.companyName}</span>
         ${scaleBadge}
+        ${callBadge}
       </td>
       <td class="py-3 px-4">
         ${getTierBadgeHtml(dm.priorityTier, dm.priorityRank)}
@@ -427,12 +462,7 @@ function renderDecisionMakerRow(dm) {
       </td>
       <td class="py-3 px-4 text-right">
         <div class="flex items-center justify-end gap-1.5">
-          <button onclick="startAutomatedCallBot('${dm.id}', 'unknown')" class="bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white font-bold px-2 py-1 rounded text-xs transition flex items-center gap-1 shadow-sm" title="Directly call from Unknown Number and AI Bot speaks">
-            <i class="fa-solid fa-user-secret"></i> Bot Call
-          </button>
-          <button onclick="startCallFromMyNumber('${dm.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2 py-1 rounded text-xs transition flex items-center gap-1 shadow-sm" title="Call from your number +91 8518900153">
-            <i class="fa-solid fa-phone"></i> Call
-          </button>
+          ${callButtonsHtml}
           <button onclick="openWhatsAppNotesModal('${dm.id}')" class="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 px-2 py-1 rounded text-xs transition flex items-center gap-1" title="Send WhatsApp Message with Notes & Referral Link">
             <i class="fa-brands fa-whatsapp text-emerald-400"></i> WhatsApp Notes
           </button>
@@ -517,6 +547,7 @@ function filterDecisionMakers() {
   const search = document.getElementById('dmSearchInput').value.toLowerCase().trim();
   const tier = document.getElementById('dmTierFilter').value;
   const status = document.getElementById('dmVerifyFilter').value;
+  const callFilter = document.getElementById('dmCallFilter') ? document.getElementById('dmCallFilter').value : '';
 
   state.filteredDms = state.decisionMakers.filter(dm => {
     let match = true;
@@ -534,6 +565,18 @@ function filterDecisionMakers() {
     }
     if (status) {
       match = match && (dm.verificationStatus === status);
+    }
+    if (callFilter) {
+      const cCount = dm.callCount || 0;
+      if (callFilter === 'eligible') {
+        match = match && (cCount < 2);
+      } else if (callFilter === 'fresh') {
+        match = match && (cCount === 0);
+      } else if (callFilter === 'followup') {
+        match = match && (cCount === 1);
+      } else if (callFilter === 'limitReached') {
+        match = match && (cCount >= 2);
+      }
     }
     return match;
   });
@@ -1589,6 +1632,36 @@ async function startAutomatedCallBot(dmId, callerIdMode = 'unknown') {
     launchAutoCallSession(json.data);
   } catch (err) {
     showToast('Auto-call error: ' + err.message, 'error');
+  }
+}
+
+// Auto-Dial Campaign for Priority Tier Leads (Strictly enforces 2-call maximum cap)
+async function startAutoCallQueueCampaign(tier = 1) {
+  try {
+    showToast(`Loading Priority Tier ${tier} auto-dial queue (excluding contacts called 2x)...`, 'info');
+    const res = await fetch(`${API_BASE}/calls/auto-queue?tier=${tier}`);
+    const json = await res.json();
+
+    if (!json.success) {
+      showToast(json.error || 'Failed to fetch auto-dial queue', 'error');
+      return;
+    }
+
+    const queue = json.data || [];
+    if (queue.length === 0) {
+      showToast(`All Tier ${tier} prospects have reached the 2-call maximum limit! Auto-discovering fresh merchant lead...`, 'warning');
+      await executeOneClickDiscovery();
+      return;
+    }
+
+    const nextLead = queue[0];
+    const callNotice = nextLead.callCount === 1 ? '1/2 calls made (Follow-up Call)' : '0/2 calls made (1st Call)';
+    showToast(`Queue Active (${queue.length} eligible prospects with < 2 calls). Dialing ${nextLead.fullName} at ${nextLead.companyName} [${callNotice}]...`, 'success');
+
+    // Launch automated bot call for the next eligible prospect
+    await startAutomatedCallBot(nextLead.id, 'unknown');
+  } catch (err) {
+    showToast('Auto-dial campaign error: ' + err.message, 'error');
   }
 }
 
