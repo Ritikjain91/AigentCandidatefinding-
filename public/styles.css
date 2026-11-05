@@ -237,6 +237,28 @@ table td:last-child {
   white-space: nowrap;
 }
 
+/* --- Sticky Right Actions & Delete Column (Always visible without scrolling) --- */
+th.sticky.right-0,
+td.sticky.right-0 {
+  position: sticky !important;
+  right: 0 !important;
+  z-index: 10 !important;
+  background-color: #0b1120 !important;
+  box-shadow: -10px 0 18px -4px rgba(0, 0, 0, 0.7) !important;
+}
+
+table tbody tr:hover td.sticky.right-0 {
+  background-color: #1e293b !important;
+}
+
+table tbody tr:nth-child(even) td.sticky.right-0 {
+  background-color: #0c1427 !important;
+}
+
+table tbody tr:nth-child(even):hover td.sticky.right-0 {
+  background-color: #1e293b !important;
+}
+
 /* --- Glassmorphism & Elevation --- */
 .card-glass {
   background: rgba(15, 23, 42, 0.85);

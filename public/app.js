@@ -384,7 +384,7 @@ function getVerificationBadgeHtml(status, id) {
 function renderDecisionMakerRow(dm) {
   const emailLink = dm.email ? `<a href="mailto:${dm.email}" class="text-indigo-400 hover:underline flex items-center gap-1"><i class="fa-regular fa-envelope text-[11px]"></i> ${dm.email}</a>` : `<span class="text-slate-500 text-xs">-</span>`;
   const linkedinLink = dm.linkedInUrl ? `<a href="${dm.linkedInUrl}" target="_blank" class="text-blue-400 hover:text-blue-300"><i class="fa-brands fa-linkedin text-sm"></i></a>` : '';
-  const sourceLink = dm.sourceUrl ? `<a href="${dm.sourceUrl}" target="_blank" class="text-slate-400 hover:text-amber-300 text-xs flex items-center gap-1 max-w-[140px] truncate" title="${dm.sourceUrl}"><i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> ${dm.sourceUrl.replace(/^https?:\/\//, '')}</a>` : `<span class="text-slate-500 text-xs">-</span>`;
+  const sourceLink = dm.sourceUrl ? `<a href="${dm.sourceUrl}" target="_blank" class="text-slate-400 hover:text-amber-300 text-xs flex items-center gap-1 max-w-[130px] truncate" title="${dm.sourceUrl}"><i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> ${dm.sourceUrl.replace(/^https?:\/\//, '')}</a>` : `<span class="text-slate-500 text-xs">-</span>`;
 
   const comp = state.companies.find(c => c.id === dm.companyId || c.name.toLowerCase() === dm.companyName.toLowerCase());
   let scaleBadge = '';
@@ -403,28 +403,25 @@ function renderDecisionMakerRow(dm) {
   let callBadge = '';
   if (isLimitReached) {
     callBadge = `<div class="mt-1"><span class="bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 shadow-sm" title="Contact Frequency Cap: 2 calls reached. Excluded from dialing queues.">
-      <i class="fa-solid fa-ban text-[9px] text-rose-400"></i> Max 2x Limit (Excluded)
+      <i class="fa-solid fa-ban text-[9px] text-rose-400"></i> Max 2x Limit
     </span></div>`;
   } else if (callCount === 1) {
     callBadge = `<div class="mt-1"><span class="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1" title="1 follow-up call attempt remaining">
-      <i class="fa-solid fa-clock-rotate-left text-[9px] text-amber-400"></i> 1/2 Calls (Follow-up Left)
+      <i class="fa-solid fa-clock-rotate-left text-[9px] text-amber-400"></i> 1/2 Calls
     </span></div>`;
   } else {
     callBadge = `<div class="mt-1"><span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1" title="Fresh prospect: 2 call attempts remaining">
-      <i class="fa-solid fa-sparkles text-[9px] text-emerald-400"></i> 0/2 Calls (Fresh Lead)
+      <i class="fa-solid fa-sparkles text-[9px] text-emerald-400"></i> 0/2 Calls (Fresh)
     </span></div>`;
   }
 
   const callButtonsHtml = isLimitReached ? `
-    <button onclick="showToast('Calling ${dm.companyName} with override on 2-call cap...', 'warning'); startAutomatedCallBot('${dm.id}', 'unknown');" class="bg-slate-800 hover:bg-slate-700 text-slate-400 font-medium px-2 py-1 rounded text-xs transition flex items-center gap-1 border border-slate-700" title="Max 2 calls reached (Click to call with override)">
+    <button onclick="showToast('Calling ${dm.companyName} with override on 2-call cap...', 'warning'); startAutomatedCallBot('${dm.id}', 'unknown');" class="bg-slate-800 hover:bg-slate-700 text-slate-400 font-medium px-2 py-1 rounded text-xs transition flex items-center gap-1 border border-slate-700" title="Max 2 calls reached (Click to override)">
       <i class="fa-solid fa-ban text-rose-400"></i> Called 2x
-    </button>
-    <button onclick="showToast('Initiating manual call to ${dm.companyName} with override...', 'warning'); startCallFromMyNumber('${dm.id}');" class="bg-slate-800 hover:bg-slate-700 text-slate-400 font-medium px-2 py-1 rounded text-xs transition flex items-center gap-1 border border-slate-700" title="Max 2 calls reached (Click to call with override)">
-      <i class="fa-solid fa-phone text-slate-500"></i> Manual
     </button>
   ` : `
     <button onclick="startAutomatedCallBot('${dm.id}', 'unknown')" class="bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white font-bold px-2 py-1 rounded text-xs transition flex items-center gap-1 shadow-sm" title="Directly call from Unknown Number and AI Bot speaks">
-      <i class="fa-solid fa-user-secret"></i> Bot Call
+      <i class="fa-solid fa-user-secret"></i> Bot
     </button>
     <button onclick="startCallFromMyNumber('${dm.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2 py-1 rounded text-xs transition flex items-center gap-1 shadow-sm" title="Call from your number +91 8518900153">
       <i class="fa-solid fa-phone"></i> Call
@@ -433,47 +430,45 @@ function renderDecisionMakerRow(dm) {
 
   return `
     <tr class="border-b border-slate-700/50 hover:bg-slate-700/30 transition text-xs ${isLimitReached ? 'opacity-85' : ''}">
-      <td class="py-3 px-4">
-        <div class="font-bold text-white text-sm flex items-center gap-2">
+      <td class="py-2.5 px-3">
+        <div class="font-bold text-white text-sm flex items-center gap-1.5">
           ${dm.fullName}
           ${linkedinLink}
         </div>
         <div class="text-slate-300 font-medium text-xs mt-0.5">${dm.designation}</div>
       </td>
-      <td class="py-3 px-4">
+      <td class="py-2.5 px-3">
         <span class="font-semibold text-slate-200">${dm.companyName}</span>
         ${scaleBadge}
         ${callBadge}
       </td>
-      <td class="py-3 px-4">
+      <td class="py-2.5 px-3 whitespace-nowrap">
         ${getTierBadgeHtml(dm.priorityTier, dm.priorityRank)}
       </td>
-      <td class="py-3 px-4">
-        <div class="font-mono text-amber-200 font-semibold flex items-center gap-1.5">
+      <td class="py-2.5 px-3">
+        <div class="font-mono text-amber-200 font-semibold flex items-center gap-1.5 whitespace-nowrap">
           <i class="fa-solid fa-phone text-[10px] text-slate-400"></i> ${dm.phone}
         </div>
-        <div class="mt-1">${emailLink}</div>
+        <div class="mt-0.5">${emailLink}</div>
       </td>
-      <td class="py-3 px-4">
-        ${sourceLink}
-      </td>
-      <td class="py-3 px-4">
+      <td class="py-2.5 px-3 whitespace-nowrap">
         ${getVerificationBadgeHtml(dm.verificationStatus, dm.id)}
+        <div class="mt-1">${sourceLink}</div>
       </td>
-      <td class="py-3 px-4 text-right">
-        <div class="flex items-center justify-end gap-1.5">
+      <td class="py-2.5 px-3 text-right sticky right-0 bg-slate-900/95 backdrop-blur-md z-10 shadow-[-8px_0_12px_rgba(0,0,0,0.6)] border-l border-slate-800">
+        <div class="flex items-center justify-end gap-1 flex-nowrap">
           ${callButtonsHtml}
           <button onclick="openWhatsAppNotesModal('${dm.id}')" class="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 px-2 py-1 rounded text-xs transition flex items-center gap-1" title="Send WhatsApp Message with Notes & Referral Link">
-            <i class="fa-brands fa-whatsapp text-emerald-400"></i> WhatsApp Notes
+            <i class="fa-brands fa-whatsapp text-emerald-400"></i> Notes
           </button>
-          <button onclick="openEmailProposalModal('${dm.id}')" class="bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 px-2 py-1 rounded text-xs transition flex items-center gap-1" title="Email proposal to run deals on Go Extra Mile app">
-            <i class="fa-solid fa-envelope"></i> Mail
+          <button onclick="openEmailProposalModal('${dm.id}')" class="bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 p-1.5 rounded text-xs transition" title="Email proposal to run deals on Go Extra Mile app">
+            <i class="fa-solid fa-envelope"></i>
           </button>
-          <button onclick="openShareModal('${dm.id}')" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 px-2 py-1 rounded text-xs transition" title="Share Go Extra Mile Link">
-            <i class="fa-solid fa-share-nodes"></i> Share
+          <button onclick="openShareModal('${dm.id}')" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 p-1.5 rounded text-xs transition" title="Share Go Extra Mile Link">
+            <i class="fa-solid fa-share-nodes"></i>
           </button>
-          <button onclick="deleteDecisionMaker('${dm.id}')" class="text-slate-500 hover:text-rose-400 p-1 transition" title="Delete">
-            <i class="fa-regular fa-trash-can"></i>
+          <button onclick="deleteDecisionMaker('${dm.id}')" class="bg-rose-500/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/40 px-2.5 py-1 rounded text-xs transition flex items-center gap-1.5 font-bold shadow-sm ml-1" title="Delete without popup (instant auto-replenish)">
+            <i class="fa-regular fa-trash-can"></i> Delete
           </button>
         </div>
       </td>
@@ -493,16 +488,15 @@ function renderDashboard() {
   }
 
   let html = `
-    <table class="w-full text-left border-collapse min-w-[880px]">
+    <table class="w-full text-left border-collapse">
       <thead>
-        <tr class="border-b border-slate-700 text-[11px] uppercase tracking-wider text-slate-400 font-semibold bg-slate-900/50">
-          <th class="py-2.5 px-4">Decision-Maker</th>
-          <th class="py-2.5 px-4">Company</th>
-          <th class="py-2.5 px-4">Priority Preference</th>
-          <th class="py-2.5 px-4">Professional Coordinates</th>
-          <th class="py-2.5 px-4">Source</th>
-          <th class="py-2.5 px-4">Status</th>
-          <th class="py-2.5 px-4 text-right">Actions</th>
+        <tr class="border-b border-slate-700 text-[11px] uppercase tracking-wider text-slate-400 font-semibold bg-slate-900/95">
+          <th class="py-2.5 px-3">Decision-Maker</th>
+          <th class="py-2.5 px-3">Company</th>
+          <th class="py-2.5 px-3">Priority Preference</th>
+          <th class="py-2.5 px-3">Direct Contact</th>
+          <th class="py-2.5 px-3">Audit & Source</th>
+          <th class="py-2.5 px-3 text-right sticky right-0 bg-slate-900 z-10 shadow-[-8px_0_12px_rgba(0,0,0,0.6)] border-l border-slate-800">Actions & Delete</th>
         </tr>
       </thead>
       <tbody>
@@ -523,16 +517,15 @@ function renderFullDecisionMakers() {
   }
 
   let html = `
-    <table class="w-full text-left border-collapse min-w-[980px]">
+    <table class="w-full text-left border-collapse">
       <thead>
-        <tr class="border-b border-slate-700 text-[11px] uppercase tracking-wider text-slate-400 font-semibold bg-slate-900/50">
-          <th class="py-2.5 px-4">Decision-Maker & Designation</th>
-          <th class="py-2.5 px-4">Company</th>
-          <th class="py-2.5 px-4">Priority Hierarchy</th>
-          <th class="py-2.5 px-4">Direct Contact (No Support Lines)</th>
-          <th class="py-2.5 px-4">Source URL</th>
-          <th class="py-2.5 px-4">Verification</th>
-          <th class="py-2.5 px-4 text-right">Outreach Actions</th>
+        <tr class="border-b border-slate-700 text-[11px] uppercase tracking-wider text-slate-400 font-semibold bg-slate-900/95">
+          <th class="py-2.5 px-3">Decision-Maker & Designation</th>
+          <th class="py-2.5 px-3">Company</th>
+          <th class="py-2.5 px-3">Priority Preference</th>
+          <th class="py-2.5 px-3">Direct Contact</th>
+          <th class="py-2.5 px-3">Audit & Source</th>
+          <th class="py-2.5 px-3 text-right sticky right-0 bg-slate-900 z-10 shadow-[-8px_0_12px_rgba(0,0,0,0.6)] border-l border-slate-800">Actions & Delete</th>
         </tr>
       </thead>
       <tbody>
@@ -2642,6 +2635,9 @@ function renderOneClickLatestCard(item) {
         </button>
         <button onclick="openWhatsAppNotesModal('${dm.id}')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1 shadow-sm">
           <i class="fa-brands fa-whatsapp"></i> WhatsApp Notes & Link
+        </button>
+        <button onclick="deleteDecisionMaker('${dm.id}')" class="bg-rose-500/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/40 px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5 font-bold shadow-sm" title="Delete without popup (instant auto-replenish)">
+          <i class="fa-regular fa-trash-can"></i> Delete
         </button>
       </div>
     </div>
