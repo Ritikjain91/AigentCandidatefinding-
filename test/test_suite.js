@@ -461,6 +461,77 @@ async function runTests() {
     assert.ok(autoCall.dialogTurns.every(t => t.speechSynthesizerConfig && t.speechSynthesizerConfig.lang === 'en-IN'));
   });
 
+  // TEST 26: WhatsApp Message with Notes Automatically Bundles Link & Code
+  await test('Requirement: WhatsApp message automatically bundles custom discussion notes with Go Extra Mile link', () => {
+    const customNotes = 'Discussed listing 20% festive voucher passes and weekend dining deals with 0% listing fee.';
+    const res = referralService.sendWhatsAppWithNotes({
+      recipientName: 'Karan Malhotra',
+      recipientPhone: '+91 98110 55490',
+      companyName: 'UrbanFeast Hospitality',
+      designation: 'Owner & Co-Founder',
+      notes: customNotes,
+      consentConfirmed: true
+    });
+
+    assert.strictEqual(res.success, true);
+    assert.strictEqual(res.referralCode, 'GOMILES');
+    assert.strictEqual(res.referralUrl, 'https://www.goextramile.in/r?code=GOMILES');
+    assert.ok(res.messageText.includes('UrbanFeast Hospitality'));
+    assert.ok(res.messageText.includes(customNotes));
+    assert.ok(res.messageText.includes('https://www.goextramile.in/r?code=GOMILES'));
+    assert.ok(res.messageText.includes('GOMILES'));
+    assert.ok(res.whatsappUrl.startsWith('https://api.whatsapp.com/send?phone=919811055490&text='));
+    assert.ok(res.whatsappUrl.includes('code%3DGOMILES'));
+  });
+
+  // TEST 27: WhatsApp Notes Message Enforces Consent Check
+  await test('Requirement: WhatsApp notes dispatch throws error without explicit consent', () => {
+    assert.throws(() => {
+      referralService.sendWhatsAppWithNotes({
+        recipientName: 'Karan Malhotra',
+        recipientPhone: '+91 98110 55490',
+        companyName: 'UrbanFeast Hospitality',
+        designation: 'Owner',
+        notes: 'Some notes',
+        consentConfirmed: false
+      });
+    }, /Consent confirmation is required/);
+  });
+
+  // TEST 28: 1-Click Search & Discovery - Small Domestic Businesses
+  await test('Requirement: 1-Click search discovers fresh Small Domestic businesses with Tier 1 decision-maker', () => {
+    const results = researchService.oneClickDiscoverCompanies({ scale: 'small', count: 1 });
+    assert.strictEqual(results.length, 1);
+    const item = results[0];
+    assert.ok(item.company.id);
+    assert.strictEqual(item.scale, 'small');
+    assert.ok(item.decisionMaker.fullName);
+    assert.strictEqual(item.decisionMaker.priorityTier, 1);
+    assert.strictEqual(dmService.isCustomerCareContact(item.decisionMaker.phone, item.decisionMaker.email).isCustomerCare, false);
+  });
+
+  // TEST 29: 1-Click Search & Discovery - Big National Enterprises
+  await test('Requirement: 1-Click search discovers fresh Big National Enterprises with Tier 1 decision-maker', () => {
+    const results = researchService.oneClickDiscoverCompanies({ scale: 'big', count: 1 });
+    assert.strictEqual(results.length, 1);
+    const item = results[0];
+    assert.strictEqual(item.scale, 'big');
+    assert.ok(item.company.name);
+    assert.strictEqual(item.decisionMaker.priorityTier, 1);
+  });
+
+  // TEST 30: 1-Click Search & Discovery - Non-Repetition Guarantee (Always Different Companies)
+  await test('Requirement: Consecutive 1-click searches return strictly DIFFERENT companies (no duplicates)', () => {
+    const lead1 = researchService.oneClickDiscoverCompanies({ scale: 'all', count: 1 })[0];
+    const lead2 = researchService.oneClickDiscoverCompanies({ scale: 'all', count: 1 })[0];
+    const lead3 = researchService.oneClickDiscoverCompanies({ scale: 'all', count: 1 })[0];
+
+    assert.notStrictEqual(lead1.company.name.toLowerCase(), lead2.company.name.toLowerCase());
+    assert.notStrictEqual(lead2.company.name.toLowerCase(), lead3.company.name.toLowerCase());
+    assert.notStrictEqual(lead1.company.domain.toLowerCase(), lead2.company.domain.toLowerCase());
+    assert.notStrictEqual(lead2.company.domain.toLowerCase(), lead3.company.domain.toLowerCase());
+  });
+
   console.log(`\n========================================`);
   console.log(`Total tests: ${passed + failed}`);
   console.log(`Passed: ${passed}`);

@@ -256,6 +256,30 @@ router.post('/leads/replenish', (req, res) => {
   }
 });
 
+// 1-Click Search & Discover Diverse Companies (Small, Mid & Big Domestic/National - Always Fresh & Non-Repeating)
+router.post('/leads/one-click-discover', (req, res) => {
+  try {
+    const scale = req.body.scale || 'all'; // 'all' | 'small' | 'mid' | 'big'
+    const count = parseInt(req.body.count || 1, 10);
+    const category = req.body.category || 'all';
+
+    const results = researchService.oneClickDiscoverCompanies({ scale, count, category });
+    const first = results[0];
+    const summaryMsg = results.length === 1 && first
+      ? `Discovered fresh ${first.scaleLabel}: ${first.company.name} in ${first.company.city} with decision-maker ${first.decisionMaker.fullName} (${first.decisionMaker.designation})!`
+      : `Discovered ${results.length} fresh diverse companies across Small, Mid & Big tiers!`;
+
+    res.json({
+      success: true,
+      message: summaryMsg,
+      count: results.length,
+      data: results
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Toggle / Configure Auto-Replenish Mode
 router.put('/leads/replenish-config', (req, res) => {
   try {
@@ -482,10 +506,13 @@ router.post('/referral/share', (req, res) => {
       recipientName,
       recipientPhone,
       recipientEmail,
+      companyName,
       channel,
       consentConfirmed,
       consentNote,
-      templateId
+      templateId,
+      notes,
+      customMessage
     } = req.body;
 
     // Requirement 10: Never send promotional messages automatically without appropriate consent and authorization
@@ -502,10 +529,13 @@ router.post('/referral/share', (req, res) => {
       recipientName,
       recipientPhone,
       recipientEmail,
+      companyName,
       channel,
       consentConfirmed,
       consentNote,
-      templateId
+      templateId,
+      notes,
+      customMessage
     });
 
     res.json({ success: true, data: result });
@@ -550,6 +580,41 @@ router.post('/referral/email-proposal', (req, res) => {
     });
 
     res.json({ success: true, message: 'Merchant email proposal generated & logged.', data: result });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// Send WhatsApp follow-up embedding custom discussion notes & official Go Extra Mile link
+router.post('/referral/whatsapp-notes', (req, res) => {
+  try {
+    const {
+      companyId,
+      decisionMakerId,
+      recipientName,
+      recipientPhone,
+      companyName,
+      designation,
+      notes,
+      consentConfirmed
+    } = req.body;
+
+    const result = referralService.sendWhatsAppWithNotes({
+      companyId,
+      decisionMakerId,
+      recipientName,
+      recipientPhone,
+      companyName,
+      designation,
+      notes,
+      consentConfirmed: consentConfirmed !== false
+    });
+
+    res.json({
+      success: true,
+      message: 'WhatsApp message with notes & referral link generated.',
+      data: result
+    });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
   }

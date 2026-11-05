@@ -14,11 +14,11 @@ class DecisionMakerService {
 
     const d = designation.trim().toLowerCase();
 
-    // First preference: Owner, Managing Director (MD), Chief Executive Officer (CEO), Founder / Co-Founder
+    // First preference: Owner, Managing Director (MD), Chief Executive Officer (CEO), Founder / Co-Founder, Chairman
     if (d.includes('owner') || d.includes('proprietor')) {
       return { tier: 1, rank: 1, label: 'Owner (1st Preference)' };
     }
-    if (d.includes('managing director') || /\bmd\b/.test(d)) {
+    if (d.includes('managing director') || /\bmd\b/.test(d) || d.includes('executive director')) {
       return { tier: 1, rank: 2, label: 'Managing Director (1st Preference)' };
     }
     if (d.includes('chief executive officer') || /\bceo\b/.test(d)) {
@@ -26,6 +26,9 @@ class DecisionMakerService {
     }
     if (d.includes('founder') || d.includes('co-founder') || d.includes('cofounder')) {
       return { tier: 1, rank: 4, label: 'Founder / Co-Founder (1st Preference)' };
+    }
+    if (d.includes('chairman') || d.includes('chairperson')) {
+      return { tier: 1, rank: 2, label: 'Chairman (1st Preference)' };
     }
 
     // Second preference: Head of Marketing, Marketing Manager

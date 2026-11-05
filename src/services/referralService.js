@@ -31,7 +31,7 @@ class ReferralService {
   }
 
   // Compose personalized follow-up message containing the link
-  composeMessage({ templateId, prospectName, companyName, designation }) {
+  composeMessage({ templateId, prospectName, companyName, designation, notes }) {
     const templates = storage.getTemplates();
     const config = this.getReferralConfig();
 
@@ -39,6 +39,7 @@ class ReferralService {
 
     const safeName = prospectName || 'Partner';
     const safeCompany = companyName || 'your company';
+    const safeNotes = (notes && notes.trim()) ? notes.trim() : 'Discussed listing exclusive brand deals, product discounts, and seasonal offers on Go Extra Mile app.';
 
     const subject = (template.subject || '')
       .replace(/{{name}}/g, safeName)
@@ -49,7 +50,8 @@ class ReferralService {
       .replace(/{{companyName}}/g, safeCompany)
       .replace(/{{designation}}/g, designation || 'Leader')
       .replace(/{{referralUrl}}/g, config.officialUrl)
-      .replace(/{{referralCode}}/g, config.referralCode);
+      .replace(/{{referralCode}}/g, config.referralCode)
+      .replace(/{{notes}}/g, safeNotes);
 
     return {
       templateId: template.id,
@@ -58,7 +60,8 @@ class ReferralService {
       subject,
       body,
       referralUrl: config.officialUrl,
-      referralCode: config.referralCode
+      referralCode: config.referralCode,
+      notes: safeNotes
     };
   }
 
@@ -101,10 +104,13 @@ class ReferralService {
     recipientName,
     recipientPhone,
     recipientEmail,
+    companyName,
     channel,
     consentConfirmed,
     consentNote,
-    templateId
+    templateId,
+    notes,
+    customMessage
   }) {
     // REQUIREMENT 10: Never send promotional messages automatically without appropriate consent and authorization
     if (!consentConfirmed) {
@@ -115,13 +121,16 @@ class ReferralService {
     const composed = this.composeMessage({
       templateId,
       prospectName: recipientName,
-      companyName: 'Your Business'
+      companyName: companyName || 'Your Business',
+      notes
     });
+
+    const finalBody = customMessage || composed.body;
 
     const shareLinks = this.generateShareLinks({
       phone: recipientPhone,
       email: recipientEmail,
-      messageText: composed.body,
+      messageText: finalBody,
       subjectText: composed.subject
     });
 
@@ -137,7 +146,7 @@ class ReferralService {
       referralCode: config.referralCode,
       consentConfirmed: true,
       consentNote: consentNote || 'Manual post-call share initiated with verified verbal/written consent.',
-      messageSnippet: composed.body.slice(0, 150) + '...',
+      messageSnippet: finalBody.slice(0, 150) + '...',
       trigger: 'Manual Share'
     });
 
@@ -145,7 +154,8 @@ class ReferralService {
       success: true,
       log: logEntry,
       shareLinks,
-      composedMessage: composed
+      composedMessage: composed,
+      notes: notes || composed.notes
     };
   }
 
@@ -198,6 +208,98 @@ class ReferralService {
       mailtoUrl: shareLinks.mailtoUrl,
       referralUrl: config.officialUrl,
       referralCode: config.referralCode
+    };
+  }
+
+  // Compose WhatsApp message embedding custom call notes and Go Extra Mile referral link
+  composeWhatsAppNoteMessage({ prospectName, companyName, designation, notes }) {
+    const config = this.getReferralConfig();
+    const safeName = prospectName || 'Partner';
+    const safeCompany = companyName || 'your brand';
+    const safeRole = designation || 'Leader';
+    const safeNotes = (notes && notes.trim()) ? notes.trim() : 'Discussed listing exclusive brand deals, promotional discounts, and seasonal offers on Go Extra Mile app with zero upfront fees.';
+
+    const message = `Hello ${safeName} (${safeRole} at ${safeCompany}),
+
+Thank you for connecting with us today regarding ${safeCompany}!
+
+📝 Discussion Notes & Action Points:
+${safeNotes}
+
+🚀 Partnering with Go Extra Mile:
+Go Extra Mile connects premier brands with thousands of active buyers looking for exclusive deals, product discounts, and promotional offers with 0% upfront listing fees.
+
+🔗 Official Partner Onboarding Link:
+${config.officialUrl}
+
+🔑 Partner Referral Code: ${config.referralCode}
+(Applied for prioritized merchant onboarding & dedicated support)
+
+Please tap the link above to complete your quick merchant profile and publish your offers. Feel free to reply directly here if you have any questions!
+
+Best regards,
+Ritik Jain
+Go Extra Mile Partnerships
+📞 +91 8518900153`;
+
+    return {
+      messageText: message,
+      referralUrl: config.officialUrl,
+      referralCode: config.referralCode,
+      notes: safeNotes
+    };
+  }
+
+  // Send / generate WhatsApp message bundling notes and referral link with consent logging
+  sendWhatsAppWithNotes({
+    companyId,
+    decisionMakerId,
+    recipientName,
+    recipientPhone,
+    companyName,
+    designation,
+    notes,
+    consentConfirmed = true
+  }) {
+    if (!consentConfirmed) {
+      throw new Error('Compliance Violation: Consent confirmation is required to dispatch referral link.');
+    }
+
+    const config = this.getReferralConfig();
+    const composed = this.composeWhatsAppNoteMessage({
+      prospectName: recipientName,
+      companyName,
+      designation,
+      notes
+    });
+
+    const shareLinks = this.generateShareLinks({
+      phone: recipientPhone,
+      messageText: composed.messageText
+    });
+
+    const logEntry = storage.logShare({
+      companyId: companyId || null,
+      decisionMakerId: decisionMakerId || null,
+      recipientName,
+      recipientPhone: recipientPhone || null,
+      channel: 'WhatsApp',
+      referralUrl: config.officialUrl,
+      referralCode: config.referralCode,
+      consentConfirmed: true,
+      consentNote: `WhatsApp follow-up with call notes & onboarding link dispatched to ${recipientName}. Notes: ${composed.notes.slice(0, 100)}`,
+      messageSnippet: composed.messageText.slice(0, 150) + '...',
+      trigger: 'WhatsApp Call Notes & Link'
+    });
+
+    return {
+      success: true,
+      log: logEntry,
+      messageText: composed.messageText,
+      whatsappUrl: shareLinks.whatsappUrl,
+      referralUrl: config.officialUrl,
+      referralCode: config.referralCode,
+      notes: composed.notes
     };
   }
 }

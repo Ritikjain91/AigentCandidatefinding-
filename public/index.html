@@ -81,6 +81,9 @@
         <button onclick="openAiSearchModal()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-md shadow-purple-500/20 ml-1.5">
           <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i> <span class="hidden md:inline">AI Search Company</span>
         </button>
+        <button onclick="executeOneClickDiscovery()" class="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 text-slate-950 font-extrabold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-md shadow-amber-500/25 ml-1.5" title="1-Click Search: Discover a fresh different company across Small, Mid, or Big tiers">
+          <i class="fa-solid fa-bolt"></i> <span class="hidden lg:inline">1-Click Auto-Search</span>
+        </button>
       </nav>
     </div>
   </header>
@@ -368,6 +371,68 @@
           <button onclick="openAddDecisionMakerModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow">
             <i class="fa-solid fa-user-plus"></i> Add New Contact
           </button>
+        </div>
+      </div>
+
+      <!-- 1-CLICK INSTANT SEARCH & DISCOVERY ENGINE (SMALL • DOMESTIC • BIG ENTERPRISES) -->
+      <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950/80 border border-amber-500/30 rounded-2xl p-5 shadow-xl space-y-4">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1.5 shadow-sm">
+                <i class="fa-solid fa-bolt text-amber-400 animate-pulse"></i> 1-CLICK INSTANT DISCOVERY ENGINE
+              </span>
+              <span class="text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
+                <i class="fa-solid fa-sparkles"></i> Guaranteed Fresh & Different (No Duplicates)
+              </span>
+            </div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              Search & Discover Companies: Small Domestic Shops, Mid-Sized Brands & Big National Enterprises
+            </h3>
+            <p class="text-xs text-slate-300">
+              Click once to automatically research and fetch a completely new company with verified Tier 1 decision-makers (Owner, MD, CEO, Founder).
+            </p>
+          </div>
+
+          <!-- The 1-Click Main Search Buttons -->
+          <div class="flex flex-wrap items-center gap-2 shrink-0">
+            <button onclick="executeOneClickDiscovery()" id="btnOneClickDiscover" class="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-extrabold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-lg shadow-amber-500/25 transition flex items-center gap-2 transform active:scale-95">
+              <i class="fa-solid fa-bolt text-slate-950 text-base" id="iconOneClickDiscover"></i>
+              <span id="labelOneClickDiscover">1-Click Auto-Search Next Company</span>
+            </button>
+            <button onclick="executeOneClickDiscoveryBatch(3)" class="bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold text-xs px-3.5 py-2.5 rounded-xl transition flex items-center gap-1.5 border border-slate-600" title="Auto-discover 3 different companies in one go">
+              <i class="fa-solid fa-layer-group text-amber-400"></i> +3 Different
+            </button>
+          </div>
+        </div>
+
+        <!-- Scale Category Filter Chips -->
+        <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-700/60 text-xs">
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span class="text-[11px] text-slate-400 font-semibold mr-1">Target Scale:</span>
+            <button type="button" onclick="setOneClickScale('all')" id="scaleChip-all" class="scale-chip active-scale-chip bg-amber-500 text-slate-950 font-bold text-[11px] px-3 py-1 rounded-lg transition shadow-sm">
+              ✨ All Scales (Mixed)
+            </button>
+            <button type="button" onclick="setOneClickScale('small')" id="scaleChip-small" class="scale-chip bg-slate-900 hover:bg-slate-700 text-slate-300 font-medium text-[11px] px-3 py-1 rounded-lg border border-slate-700 transition">
+              🏪 Small Domestic Shops & Cafes
+            </button>
+            <button type="button" onclick="setOneClickScale('mid')" id="scaleChip-mid" class="scale-chip bg-slate-900 hover:bg-slate-700 text-slate-300 font-medium text-[11px] px-3 py-1 rounded-lg border border-slate-700 transition">
+              🏢 Mid-Sized Domestic Brands
+            </button>
+            <button type="button" onclick="setOneClickScale('big')" id="scaleChip-big" class="scale-chip bg-slate-900 hover:bg-slate-700 text-slate-300 font-medium text-[11px] px-3 py-1 rounded-lg border border-slate-700 transition">
+              🏬 Big National Enterprises
+            </button>
+          </div>
+
+          <div class="text-[11px] text-emerald-400 font-mono flex items-center gap-1.5">
+            <i class="fa-solid fa-shield-halved text-emerald-400"></i>
+            <span>No 1800/1860 toll-free lines &bull; Strict Direct Contacts</span>
+          </div>
+        </div>
+
+        <!-- Latest Discovered Result Card Container (Dynamically updated) -->
+        <div id="oneClickLatestCard" class="hidden bg-slate-950/80 border border-amber-500/40 rounded-xl p-3.5 space-y-2 animate-scale-in">
+          <!-- Populated by JavaScript on click -->
         </div>
       </div>
 
@@ -718,6 +783,16 @@
           <select id="shareTemplateSelect" onchange="updateSharePreview()" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200">
             <!-- Populated via API -->
           </select>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+              <i class="fa-solid fa-file-pen text-amber-400"></i> Meeting / Discussion Notes (Included in WhatsApp Message)
+            </label>
+            <span class="text-[10px] text-amber-300 font-mono">Bundled with Referral Link & Code</span>
+          </div>
+          <textarea id="shareNotesInput" rows="2" oninput="updateSharePreview()" placeholder="e.g. Discussed listing 20% discount vouchers; merchant onboard fee waived; catalog upload promised." class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200 placeholder-slate-500"></textarea>
         </div>
 
         <div>
@@ -1138,6 +1213,24 @@
           </div>
         </div>
 
+        <!-- Post-Call Discussion Notes (Bundled into WhatsApp Message with Link) -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <label class="block text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+              <i class="fa-solid fa-file-lines text-amber-400"></i> Discussion Notes (Automatically Included in WhatsApp Message)
+            </label>
+            <span class="text-[10px] text-amber-300 font-mono">Bundles with Referral Link & Code</span>
+          </div>
+          <textarea id="activeCallNotesInput" rows="2" placeholder="e.g. Discussed listing Diwali promotional discounts; merchant agreed to 0% listing fee; onboarding portal link requested." class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg p-2.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500"></textarea>
+          <!-- Quick note tags -->
+          <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
+            <span class="text-[10px] text-slate-400 font-medium">Quick chips:</span>
+            <button type="button" onclick="appendActiveCallNote('0% listing fee agreed; wants to feature 15-20% exclusive discounts.')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] px-2 py-0.5 rounded border border-slate-700 transition">+ 0% Fee & Deals</button>
+            <button type="button" onclick="appendActiveCallNote('Interested in catalog onboarding; requested portal link on WhatsApp.')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] px-2 py-0.5 rounded border border-slate-700 transition">+ Catalog Onboarding</button>
+            <button type="button" onclick="appendActiveCallNote('Requested festive offer campaign details and merchant agreement.')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] px-2 py-0.5 rounded border border-slate-700 transition">+ Festive Campaign</button>
+          </div>
+        </div>
+
         <div class="flex flex-wrap items-center justify-between gap-3">
           <select id="activeCallOutcomeSelect" class="bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200 focus:outline-none">
             <option value="Interested">Interested in Go Extra Mile Listing</option>
@@ -1151,8 +1244,8 @@
             <button onclick="finishActiveCall(false)" class="bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold text-xs px-3.5 py-2 rounded-lg transition">
               Log Call Only
             </button>
-            <button onclick="finishActiveCall(true)" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-lg transition flex items-center gap-1.5 shadow-lg shadow-amber-500/20">
-              <i class="fa-solid fa-paper-plane"></i> Send Referral Link to WhatsApp
+            <button onclick="finishActiveCall(true)" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2 rounded-lg transition flex items-center gap-1.5 shadow-lg shadow-emerald-600/20">
+              <i class="fa-brands fa-whatsapp text-sm"></i> Send Notes + Link to WhatsApp
             </button>
           </div>
         </div>
@@ -1281,10 +1374,21 @@
           </button>
         </div>
 
+        <!-- Automated AI Bot Discussion Notes for WhatsApp follow-up -->
+        <div class="space-y-1 bg-slate-950/70 border border-slate-800 rounded-lg p-2.5">
+          <div class="flex items-center justify-between">
+            <label class="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
+              <i class="fa-solid fa-clipboard-check text-purple-400"></i> Bot Call Notes & Highlights (Auto-Bundled in WhatsApp with Link):
+            </label>
+            <span class="text-[10px] text-yellow-300 font-mono">Includes Code GOMILES</span>
+          </div>
+          <textarea id="autoCallNotesInput" rows="2" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg p-2 text-slate-200 focus:outline-none focus:border-purple-500 placeholder-slate-500 font-sans leading-relaxed"></textarea>
+        </div>
+
         <div class="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-800">
           <div class="flex flex-wrap items-center gap-2">
-            <button onclick="dispatchBotReferralWhatsApp()" id="btnAutoSendReferral" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow-lg shadow-amber-500/20">
-              <i class="fa-brands fa-whatsapp text-sm"></i> Send to WhatsApp
+            <button onclick="dispatchBotReferralWhatsApp()" id="btnAutoSendReferral" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow-lg shadow-emerald-600/20">
+              <i class="fa-brands fa-whatsapp text-sm"></i> Send Notes & Link to WhatsApp
             </button>
             <button onclick="dispatchBotReferralEmail()" id="btnAutoSendEmail" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow-lg shadow-indigo-600/20">
               <i class="fa-solid fa-envelope"></i> Mail Campaign Proposal

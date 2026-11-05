@@ -198,7 +198,7 @@ function copyReferralLink() {
   });
 }
 
-function openShareModal(dmId = null) {
+function openShareModal(dmId = null, templateId = null, prefilledNotes = '') {
   const modal = document.getElementById('modalShare');
   modal.classList.remove('hidden');
 
@@ -223,7 +223,27 @@ function openShareModal(dmId = null) {
   document.getElementById('shareEmail').value = defaultEmail;
   document.getElementById('shareConsentCheckbox').checked = false;
 
+  const notesInput = document.getElementById('shareNotesInput');
+  if (notesInput) {
+    notesInput.value = prefilledNotes || '';
+  }
+
+  if (templateId) {
+    const select = document.getElementById('shareTemplateSelect');
+    if (select) select.value = templateId;
+  }
+
   updateSharePreview();
+}
+
+function openWhatsAppNotesModal(dmId) {
+  const dm = state.decisionMakers.find(d => d.id === dmId);
+  if (!dm) return;
+  const company = dm.companyName || 'your brand';
+  const defaultNote = `Discussed listing ${company}'s exclusive product catalog, discount deals, and promotional offers on Go Extra Mile app with zero upfront listing fees. Decision-maker requested partner portal onboarding link.`;
+  openShareModal(dmId, 'tpl_whatsapp_call_notes_with_link', defaultNote);
+  document.getElementById('shareConsentCheckbox').checked = true;
+  showToast(`WhatsApp Follow-Up loaded with call notes for ${dm.fullName}!`, 'info');
 }
 
 function closeShareModal() {
@@ -248,15 +268,23 @@ function updateSharePreview() {
   const company = document.getElementById('shareCompanyName').value.trim() || 'your brand';
   const url = state.settings.referral?.officialUrl || 'https://www.goextramile.in/r?code=GOMILES';
   const code = state.settings.referral?.referralCode || 'GOMILES';
+  const notes = document.getElementById('shareNotesInput')?.value.trim() || '';
 
   const tpl = state.templates.find(t => t.id === templateId) || state.templates[0];
   if (!tpl) return;
 
-  const text = tpl.body
+  const safeNotes = notes || 'Discussed listing exclusive brand deals, promotional discounts, and seasonal offers on Go Extra Mile app.';
+
+  let text = tpl.body
     .replace(/{{name}}/g, name)
     .replace(/{{companyName}}/g, company)
     .replace(/{{referralUrl}}/g, url)
-    .replace(/{{referralCode}}/g, code);
+    .replace(/{{referralCode}}/g, code)
+    .replace(/{{notes}}/g, safeNotes);
+
+  if (notes && !tpl.body.includes('{{notes}}')) {
+    text += `\n\n📝 Discussion Notes:\n${notes}`;
+  }
 
   document.getElementById('shareMessagePreview').value = text;
 }
@@ -280,6 +308,8 @@ async function executeShareAction(channel) {
   const phone = document.getElementById('sharePhone').value.trim();
   const email = document.getElementById('shareEmail').value.trim();
   const templateId = document.getElementById('shareTemplateSelect').value;
+  const notes = document.getElementById('shareNotesInput')?.value.trim() || '';
+  const customMessage = document.getElementById('shareMessagePreview')?.value.trim();
 
   try {
     const res = await fetch(`${API_BASE}/referral/share`, {
@@ -289,9 +319,12 @@ async function executeShareAction(channel) {
         recipientName: name,
         recipientPhone: phone,
         recipientEmail: email,
+        companyName: company,
         channel: channel === 'whatsapp' ? 'WhatsApp' : 'Email',
         consentConfirmed: true,
-        templateId
+        templateId,
+        notes,
+        customMessage
       })
     });
 
@@ -301,13 +334,21 @@ async function executeShareAction(channel) {
       return;
     }
 
-    showToast(`Logged consent & prepared ${channel.toUpperCase()} share!`, 'success');
+    showToast(`Logged consent & prepared ${channel.toUpperCase()} share with notes & link!`, 'success');
     closeShareModal();
     await loadShareLogs();
     renderShareLogs();
 
     // Trigger platform action
     if (channel === 'whatsapp') {
+      window.open(json.data.shareLinks.whatsappUrl, '_blank');
+    } else {
+      window.location.href = json.data.shareLinks.mailtoUrl;
+    }
+  } catch (err) {
+    showToast('Network error: ' + err.message, 'error');
+  }
+}
       window.open(json.data.shareLinks.whatsappUrl, '_blank');
     } else {
       window.location.href = json.data.shareLinks.mailtoUrl;
@@ -353,6 +394,17 @@ function renderDecisionMakerRow(dm) {
   const linkedinLink = dm.linkedInUrl ? `<a href="${dm.linkedInUrl}" target="_blank" class="text-blue-400 hover:text-blue-300"><i class="fa-brands fa-linkedin text-sm"></i></a>` : '';
   const sourceLink = dm.sourceUrl ? `<a href="${dm.sourceUrl}" target="_blank" class="text-slate-400 hover:text-amber-300 text-xs flex items-center gap-1 max-w-[140px] truncate" title="${dm.sourceUrl}"><i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> ${dm.sourceUrl.replace(/^https?:\/\//, '')}</a>` : `<span class="text-slate-500 text-xs">-</span>`;
 
+  const comp = state.companies.find(c => c.id === dm.companyId || c.name.toLowerCase() === dm.companyName.toLowerCase());
+  let scaleBadge = '';
+  if (comp && comp.scaleLabel) {
+    const badgeColor = comp.scale === 'small'
+      ? 'bg-amber-500/10 text-amber-300 border-amber-500/30'
+      : comp.scale === 'big'
+        ? 'bg-purple-500/10 text-purple-300 border-purple-500/30'
+        : 'bg-blue-500/10 text-blue-300 border-blue-500/30';
+    scaleBadge = `<div class="mt-0.5"><span class="text-[9px] font-bold px-1.5 py-0.5 rounded border ${badgeColor}">${comp.scaleLabel}</span></div>`;
+  }
+
   return `
     <tr class="border-b border-slate-700/50 hover:bg-slate-700/30 transition text-xs">
       <td class="py-3 px-4">
@@ -364,6 +416,7 @@ function renderDecisionMakerRow(dm) {
       </td>
       <td class="py-3 px-4">
         <span class="font-semibold text-slate-200">${dm.companyName}</span>
+        ${scaleBadge}
       </td>
       <td class="py-3 px-4">
         ${getTierBadgeHtml(dm.priorityTier, dm.priorityRank)}
@@ -383,10 +436,13 @@ function renderDecisionMakerRow(dm) {
       <td class="py-3 px-4 text-right">
         <div class="flex items-center justify-end gap-1.5">
           <button onclick="startAutomatedCallBot('${dm.id}', 'unknown')" class="bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white font-bold px-2 py-1 rounded text-xs transition flex items-center gap-1 shadow-sm" title="Directly call from Unknown Number and AI Bot speaks">
-            <i class="fa-solid fa-user-secret"></i> Bot Call (Unknown)
+            <i class="fa-solid fa-user-secret"></i> Bot Call
           </button>
           <button onclick="startCallFromMyNumber('${dm.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2 py-1 rounded text-xs transition flex items-center gap-1 shadow-sm" title="Call from your number +91 8518900153">
-            <i class="fa-solid fa-phone"></i> Call (8518900153)
+            <i class="fa-solid fa-phone"></i> Call
+          </button>
+          <button onclick="openWhatsAppNotesModal('${dm.id}')" class="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 px-2 py-1 rounded text-xs transition flex items-center gap-1" title="Send WhatsApp Message with Notes & Referral Link">
+            <i class="fa-brands fa-whatsapp text-emerald-400"></i> WhatsApp Notes
           </button>
           <button onclick="openEmailProposalModal('${dm.id}')" class="bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 px-2 py-1 rounded text-xs transition flex items-center gap-1" title="Email proposal to run deals on Go Extra Mile app">
             <i class="fa-solid fa-envelope"></i> Mail
@@ -1335,48 +1391,99 @@ function closeActiveCallModal() {
   activeCallSessionData = null;
 }
 
+function appendActiveCallNote(noteText) {
+  const input = document.getElementById('activeCallNotesInput');
+  if (!input) return;
+  if (input.value.trim().length > 0) {
+    input.value = input.value.trim() + '; ' + noteText;
+  } else {
+    input.value = noteText;
+  }
+}
+
 async function finishActiveCall(andShareReferral = false) {
   if (!activeCallSessionData) return;
 
   const outcome = document.getElementById('activeCallOutcomeSelect').value;
   const consent = document.getElementById('activeCallConsentChecked').checked;
+  const notesText = document.getElementById('activeCallNotesInput')?.value.trim() || '';
 
   try {
-    const res = await fetch(`${API_BASE}/calls`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        companyId: activeCallSessionData.companyId,
-        decisionMakerId: activeCallSessionData.decisionMakerId,
-        outcome,
-        notes: `Call from agent line ${activeCallSessionData.callerNumber} to ${activeCallSessionData.targetName} (${activeCallSessionData.targetDesignation} - ${activeCallSessionData.targetCompany}). Outcome: ${outcome}.`,
-        referralShared: andShareReferral,
-        consentVerified: consent,
-        channel: andShareReferral ? 'WhatsApp' : null
-      })
-    });
-
-    const json = await res.json();
-    if (!json.success) {
-      showToast(json.error || 'Failed to save call record', 'error');
-      return;
-    }
-
-    showToast('Call logged successfully!', 'success');
-    closeActiveCallModal();
-    await refreshAllData();
-
     if (andShareReferral) {
       if (!consent) {
         showToast('Consent confirmation required to dispatch referral link.', 'error');
         return;
       }
-      openShareModal(activeCallSessionData.decisionMakerId);
-      document.getElementById('shareConsentCheckbox').checked = true;
-      document.getElementById('shareProspectName').value = activeCallSessionData.targetName;
-      document.getElementById('shareCompanyName').value = activeCallSessionData.targetCompany;
-      document.getElementById('sharePhone').value = activeCallSessionData.targetNumber;
-      updateSharePreview();
+
+      // Generate WhatsApp follow-up embedding custom discussion notes & official link
+      const resNotes = await fetch(`${API_BASE}/referral/whatsapp-notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyId: activeCallSessionData.companyId,
+          decisionMakerId: activeCallSessionData.decisionMakerId,
+          recipientName: activeCallSessionData.targetName,
+          recipientPhone: activeCallSessionData.targetNumber,
+          companyName: activeCallSessionData.targetCompany,
+          designation: activeCallSessionData.targetDesignation,
+          notes: notesText || `Discussed listing exclusive brand deals and offers on Go Extra Mile app. Outcome: ${outcome}.`,
+          consentConfirmed: true
+        })
+      });
+
+      const jsonNotes = await resNotes.json();
+      if (!jsonNotes.success) {
+        showToast(jsonNotes.error || 'Failed to dispatch WhatsApp notes message', 'error');
+        return;
+      }
+
+      // Log call session
+      await fetch(`${API_BASE}/calls`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyId: activeCallSessionData.companyId,
+          decisionMakerId: activeCallSessionData.decisionMakerId,
+          outcome,
+          notes: notesText ? `${notesText} (Call from ${activeCallSessionData.callerNumber})` : `Call from agent line ${activeCallSessionData.callerNumber} to ${activeCallSessionData.targetName}. Outcome: ${outcome}.`,
+          referralShared: true,
+          sharedVia: 'WhatsApp (Notes + Referral Link)',
+          consentVerified: true,
+          channel: 'WhatsApp'
+        })
+      });
+
+      showToast('Call logged & WhatsApp opened with discussion notes and Go Extra Mile referral link!', 'success');
+      closeActiveCallModal();
+      await refreshAllData();
+
+      if (jsonNotes.data?.whatsappUrl) {
+        window.open(jsonNotes.data.whatsappUrl, '_blank');
+      }
+    } else {
+      const res = await fetch(`${API_BASE}/calls`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyId: activeCallSessionData.companyId,
+          decisionMakerId: activeCallSessionData.decisionMakerId,
+          outcome,
+          notes: notesText ? `${notesText} (Call from ${activeCallSessionData.callerNumber})` : `Call from agent line ${activeCallSessionData.callerNumber} to ${activeCallSessionData.targetName} (${activeCallSessionData.targetDesignation} - ${activeCallSessionData.targetCompany}). Outcome: ${outcome}.`,
+          referralShared: false,
+          consentVerified: consent,
+          channel: null
+        })
+      });
+
+      const json = await res.json();
+      if (!json.success) {
+        showToast(json.error || 'Failed to save call record', 'error');
+        return;
+      }
+
+      showToast('Call logged successfully!', 'success');
+      closeActiveCallModal();
+      await refreshAllData();
     }
   } catch (err) {
     showToast('Failed to complete call: ' + err.message, 'error');
@@ -1606,6 +1713,12 @@ function launchAutoCallSession(callData) {
     if (durEl) durEl.innerText = `${m}:${s}`;
   }, 1000);
 
+  // Prefill Bot Notes for WhatsApp follow-up
+  const notesEl = document.getElementById('autoCallNotesInput');
+  if (notesEl) {
+    notesEl.value = `Autonomous AI Voice Bot pitch: Discussed listing ${callData.targetCompany}'s exclusive product catalog and discount offers on Go Extra Mile app with 0% upfront fee.`;
+  }
+
   document.getElementById('modalAutoCallBot').classList.remove('hidden');
 
   // Step 1: Greeting - Bot speaks directly!
@@ -1649,7 +1762,12 @@ function playFullBotSpeech() {
 function advanceBotStep(intent) {
   if (!activeAutoCallData) return;
 
+  const notesEl = document.getElementById('autoCallNotesInput');
+
   if (intent === 'cost_query') {
+    if (notesEl) {
+      notesEl.value = `Fee Inquiry: Confirmed 0% upfront listing fee, 100% price autonomy, and exclusive deal featuring for ${activeAutoCallData.targetCompany}.`;
+    }
     addTranscriptBubble('prospect', 'What does it cost to list our brand on Go Extra Mile?');
     setTimeout(() => {
       const answer = 'There are absolutely zero upfront listing fees. Your brand retains 100% control over your discount percentages, featured products, and campaign duration.';
@@ -1657,6 +1775,9 @@ function advanceBotStep(intent) {
       speakBotText(answer);
     }, 800);
   } else if (intent === 'interested') {
+    if (notesEl) {
+      notesEl.value = `Confirmed Interest: ${activeAutoCallData.targetName} agreed to list ${activeAutoCallData.targetCompany}'s exclusive deals and offers on Go Extra Mile app. Requested onboarding link on WhatsApp.`;
+    }
     addTranscriptBubble('prospect', 'Yes, that sounds great. Go ahead and send me the partner onboarding link on WhatsApp.');
     setTimeout(() => {
       const closing = `Wonderful, ${activeAutoCallData.targetName}! Dispatching our official partner onboarding link (https://www.goextramile.in/r?code=GOMILES) to your WhatsApp (${activeAutoCallData.targetNumber}) right now. Referral code GOMILES is already applied for prioritized onboarding!`;
@@ -1668,6 +1789,9 @@ function advanceBotStep(intent) {
       }, 1500);
     }, 800);
   } else if (intent === 'email_requested') {
+    if (notesEl) {
+      notesEl.value = `Proposal Requested: Decision-maker requested official merchant onboarding agreement and campaign proposal for ${activeAutoCallData.targetCompany}.`;
+    }
     addTranscriptBubble('prospect', 'Can you please email me the official merchant campaign proposal and onboarding link?');
     setTimeout(() => {
       const emailTarget = activeAutoCallData.targetEmail || 'your email';
@@ -1685,37 +1809,52 @@ function advanceBotStep(intent) {
 async function dispatchBotReferralWhatsApp() {
   if (!activeAutoCallData) return;
 
+  const notesText = document.getElementById('autoCallNotesInput')?.value.trim() ||
+    `Autonomous AI Voice Bot pitched Go Extra Mile merchant deals & product listing. Decision-maker agreed to review onboarding link with 0% listing fee.`;
+
   try {
-    const res = await fetch(`${API_BASE}/calls`, {
+    const resNotes = await fetch(`${API_BASE}/referral/whatsapp-notes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        companyId: activeAutoCallData.companyId,
+        decisionMakerId: activeAutoCallData.decisionMakerId,
+        recipientName: activeAutoCallData.targetName,
+        recipientPhone: activeAutoCallData.targetNumber,
+        companyName: activeAutoCallData.targetCompany,
+        designation: activeAutoCallData.targetDesignation,
+        notes: notesText,
+        consentConfirmed: true
+      })
+    });
+
+    const jsonNotes = await resNotes.json();
+    if (!jsonNotes.success) {
+      showToast(jsonNotes.error || 'Failed to dispatch WhatsApp message', 'error');
+      return;
+    }
+
+    await fetch(`${API_BASE}/calls`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         companyId: activeAutoCallData.companyId,
         decisionMakerId: activeAutoCallData.decisionMakerId,
         outcome: 'Interested (Automated AI Call)',
-        notes: `Autonomous AI Voice Bot pitched Go Extra Mile merchant deals & product listing. Decision-maker consented to receive onboarding link.`,
+        notes: notesText,
         referralShared: true,
-        sharedVia: 'WhatsApp',
+        sharedVia: 'WhatsApp (Notes + Referral Link)',
         consentVerified: true,
         channel: 'WhatsApp'
       })
     });
 
-    const json = await res.json();
-    if (!json.success) {
-      showToast(json.error || 'Failed to log call', 'error');
-      return;
-    }
-
-    showToast('Automated Call Completed & Logged: Referral Link Sent!', 'success');
+    showToast('Automated Call Logged: WhatsApp opened with bot notes and Go Extra Mile referral link!', 'success');
     await refreshAllData();
 
-    const targetClean = activeAutoCallData.targetNumber.replace(/[^0-9]/g, '');
-    const cleanPhone = targetClean.startsWith('91') ? targetClean : '91' + targetClean.slice(-10);
-    const msgText = encodeURIComponent(`Hi ${activeAutoCallData.targetName}, great speaking with you! Here is the official Go Extra Mile partner portal link to list ${activeAutoCallData.targetCompany}'s exclusive deals and offers: https://www.goextramile.in/r?code=GOMILES (Referral Code: GOMILES)`);
-    const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${msgText}`;
-
-    window.open(waUrl, '_blank');
+    if (jsonNotes.data?.whatsappUrl) {
+      window.open(jsonNotes.data.whatsappUrl, '_blank');
+    }
   } catch (err) {
     showToast('Error sending referral link: ' + err.message, 'error');
   }
@@ -2277,5 +2416,126 @@ async function executeAiCompanySearch() {
     btn.disabled = false;
     btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Search with AI';
   }
+}
+
+// ==========================================
+// 1-CLICK INSTANT SEARCH & DISCOVERY ENGINE (SMALL • DOMESTIC • BIG ENTERPRISES)
+// ==========================================
+let currentOneClickScale = 'all';
+
+function setOneClickScale(scale) {
+  currentOneClickScale = scale;
+  const scales = ['all', 'small', 'mid', 'big'];
+  scales.forEach(s => {
+    const btn = document.getElementById(`scaleChip-${s}`);
+    if (btn) {
+      if (s === scale) {
+        btn.className = 'scale-chip active-scale-chip bg-amber-500 text-slate-950 font-bold text-[11px] px-3 py-1 rounded-lg transition shadow-sm';
+      } else {
+        btn.className = 'scale-chip bg-slate-900 hover:bg-slate-700 text-slate-300 font-medium text-[11px] px-3 py-1 rounded-lg border border-slate-700 transition';
+      }
+    }
+  });
+
+  const label = document.getElementById('labelOneClickDiscover');
+  if (label) {
+    if (scale === 'small') label.innerText = '1-Click Auto-Search Small Domestic Shop';
+    else if (scale === 'mid') label.innerText = '1-Click Auto-Search Mid-Sized Domestic Brand';
+    else if (scale === 'big') label.innerText = '1-Click Auto-Search Big National Enterprise';
+    else label.innerText = '1-Click Auto-Search Next Company';
+  }
+}
+
+async function executeOneClickDiscovery(scale = null, count = 1) {
+  const targetScale = scale || currentOneClickScale;
+  const btn = document.getElementById('btnOneClickDiscover');
+  const icon = document.getElementById('iconOneClickDiscover');
+  const label = document.getElementById('labelOneClickDiscover');
+
+  if (btn) btn.disabled = true;
+  if (icon) icon.className = 'fa-solid fa-spinner fa-spin text-slate-950 text-base';
+  if (label) label.innerText = 'Searching across public directories & company rosters...';
+
+  try {
+    const res = await fetch(`${API_BASE}/leads/one-click-discover`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ scale: targetScale, count })
+    });
+
+    const json = await res.json();
+    if (!json.success) {
+      showToast(json.error || 'Failed to discover company', 'error');
+      return;
+    }
+
+    const items = json.data || [];
+    if (items.length > 0) {
+      const first = items[0];
+      showToast(`⚡ Discovered fresh company: ${first.company.name} (${first.scaleLabel})!`, 'success');
+      renderOneClickLatestCard(first);
+    }
+
+    await refreshAllData();
+  } catch (err) {
+    showToast('Discovery network error: ' + err.message, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+    if (icon) icon.className = 'fa-solid fa-bolt text-slate-950 text-base';
+    setOneClickScale(currentOneClickScale);
+  }
+}
+
+async function executeOneClickDiscoveryBatch(count = 3) {
+  await executeOneClickDiscovery(currentOneClickScale, count);
+}
+
+function renderOneClickLatestCard(item) {
+  const card = document.getElementById('oneClickLatestCard');
+  if (!card) return;
+
+  const comp = item.company;
+  const dm = item.decisionMaker;
+  const scale = item.scale;
+  const scaleBadgeClass = scale === 'small'
+    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+    : scale === 'big'
+      ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+      : 'bg-blue-500/20 text-blue-300 border-blue-500/40';
+
+  card.innerHTML = `
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div class="space-y-1">
+        <div class="flex items-center gap-2">
+          <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${scaleBadgeClass}">
+            ${item.scaleLabel}
+          </span>
+          <span class="text-xs font-bold text-white">${comp.name}</span>
+          <span class="text-xs text-slate-400 font-medium">&bull; ${comp.city} &bull; ${comp.industry}</span>
+        </div>
+        <div class="text-xs text-slate-300 flex flex-wrap items-center gap-3">
+          <span class="font-semibold text-amber-300"><i class="fa-solid fa-user-tie"></i> ${dm.fullName}</span>
+          <span class="text-slate-400">(${dm.designation})</span>
+          <span class="font-mono text-emerald-400 font-semibold"><i class="fa-solid fa-phone"></i> ${dm.phone}</span>
+          ${dm.email ? `<span class="text-indigo-400"><i class="fa-solid fa-envelope"></i> ${dm.email}</span>` : ''}
+        </div>
+        <p class="text-[11px] text-slate-400 italic">${comp.notes || ''}</p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-1.5 shrink-0">
+        <button onclick="startAutomatedCallBot('${dm.id}', 'unknown')" class="bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1 shadow-sm">
+          <i class="fa-solid fa-user-secret"></i> Bot Call
+        </button>
+        <button onclick="startCallFromMyNumber('${dm.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1 shadow-sm">
+          <i class="fa-solid fa-phone"></i> Call
+        </button>
+        <button onclick="openWhatsAppNotesModal('${dm.id}')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1 shadow-sm">
+          <i class="fa-brands fa-whatsapp"></i> WhatsApp Notes & Link
+        </button>
+      </div>
+    </div>
+  `;
+
+  card.classList.remove('hidden');
 }
 

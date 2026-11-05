@@ -118,6 +118,8 @@ class StorageService {
       domain: company.domain ? company.domain.trim() : '',
       industry: company.industry || 'General Retail & Services',
       city: company.city || 'India',
+      scale: company.scale || 'domestic',
+      scaleLabel: company.scaleLabel || 'Domestic Business',
       website: company.website || (company.domain ? `https://${company.domain}` : ''),
       status: company.status || 'New',
       notes: company.notes || '',

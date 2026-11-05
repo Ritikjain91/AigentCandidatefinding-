@@ -38,6 +38,14 @@
     "subject": "Boost {{companyName}}'s Sales with Go Extra Mile Exclusive Deals",
     "body": "Hello {{name}},\n\nWe would love to feature {{companyName}}'s exclusive deals and product discounts to thousands of active shoppers on the Go Extra Mile app.\n\nCheck out our merchant onboarding and register here:\n{{referralUrl}}\n(Referral Code: {{referralCode}})\n\nLooking forward to driving high-value customers to your offerings!",
     "recommendedFor": ["Cold Outreach", "Follow-up"]
+  },
+  {
+    "id": "tpl_whatsapp_call_notes_with_link",
+    "name": "WhatsApp Call Notes & Onboarding Link",
+    "type": "whatsapp",
+    "subject": "Discussion Notes & Go Extra Mile Onboarding Link",
+    "body": "Hello {{name}},\n\nThank you for connecting with us today regarding {{companyName}}!\n\n📝 Discussion Notes & Action Points:\n{{notes}}\n\n🚀 Partnering with Go Extra Mile:\nGo Extra Mile connects premier brands with thousands of active buyers looking for exclusive deals, product discounts, and promotional offers with 0% upfront listing fees.\n\n🔗 Official Partner Onboarding Link:\n{{referralUrl}}\n\n🔑 Partner Referral Code: {{referralCode}}\n(Applied for prioritized verification and zero upfront listing friction)\n\nPlease tap the link above to complete your quick merchant profile and list your offers. Looking forward to working together!\n\nBest regards,\nRitik Jain\nGo Extra Mile Partnerships\n📞 +91 8518900153",
+    "recommendedFor": ["Interested", "Follow-up", "Notes"]
   }
 ]
 
