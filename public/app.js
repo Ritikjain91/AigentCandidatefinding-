@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadSettings();
   await loadTemplates();
   await loadAiStatus();
+  await initTelephonyStatus();
   await refreshAllData();
 });
 
@@ -1679,8 +1680,13 @@ async function testAiBotOnMyNumber(callerIdMode = 'unknown') {
       return;
     }
 
-    launchAutoCallSession(json.data);
-    showToast('AI Voice Bot Speaking: Pitching Go Extra Mile to Ritik Jain (+91 8518900153)!', 'success');
+    launchAutoCallSession(json.data, json.realCall);
+
+    if (json.realCall && json.realCall.realCallPlaced) {
+      showToast(`📞 Real PSTN Call Placed via ${json.realCall.provider}! Your phone +91 8518900153 is ringing now!`, 'success');
+    } else {
+      showToast('🔊 Simulation Active: Speaking via computer audio. (Enter Twilio/Exotel credentials to ring your physical SIM).', 'info');
+    }
   } catch (err) {
     showToast('AI test call error: ' + err.message, 'error');
   }
@@ -1747,8 +1753,35 @@ function toggleAutoCallCallerMode(mode) {
   }
 }
 
-function launchAutoCallSession(callData) {
+function launchAutoCallSession(callData, realCallData = null) {
   activeAutoCallData = callData;
+
+  const realCall = realCallData || callData.realCall;
+  const telIcon = document.getElementById('autoCallTelIcon');
+  const telText = document.getElementById('autoCallTelText');
+  const directSimBtn = document.getElementById('btnAutoCallDirectSim');
+
+  if (directSimBtn && callData.targetNumber) {
+    const cleanNum = (callData.targetNumber || '').replace(/[^0-9]/g, '');
+    const dialNum = cleanNum.startsWith('91') && cleanNum.length === 12
+      ? cleanNum
+      : cleanNum.length === 10
+      ? `91${cleanNum}`
+      : cleanNum;
+    directSimBtn.href = `tel:+${dialNum}`;
+  }
+
+  if (realCall && realCall.realCallPlaced) {
+    if (telIcon) telIcon.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0';
+    if (telText) {
+      telText.innerHTML = `<strong class="text-emerald-300">📞 Real PSTN Call Placed:</strong> Ringing your handset via ${realCall.provider} (SID: ${realCall.callSid || 'active'})!`;
+    }
+  } else {
+    if (telIcon) telIcon.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0';
+    if (telText) {
+      telText.innerHTML = `<strong class="text-amber-300">🔊 Browser Audio Simulation:</strong> Speaking aloud via computer audio. <span class="text-slate-400">(Connect Twilio/Exotel or tap 'Dial on SIM' to ring real phone).</span>`;
+    }
+  }
 
   document.getElementById('autoCallTargetName').innerText = callData.targetName;
   document.getElementById('autoCallTargetDesignation').innerText = `${callData.targetDesignation} • ${callData.targetCompany}`;
@@ -2675,5 +2708,189 @@ function renderOneClickLatestCard(item) {
     c.innerHTML = html;
     c.classList.remove('hidden');
   });
+}
+
+// ==========================================
+// CLOUD TELEPHONY & REAL PHONE CALLING ENGINE
+// ==========================================
+
+let telephonyConfig = {
+  provider: 'simulation',
+  isConfigured: false
+};
+
+async function initTelephonyStatus() {
+  try {
+    const res = await fetch(`${API_BASE}/telephony/status`);
+    const json = await res.json();
+    if (!json.success) return;
+
+    telephonyConfig = json.data;
+
+    const dot = document.getElementById('telephonyHeaderDot');
+    const text = document.getElementById('telephonyHeaderText');
+    const pill = document.getElementById('modalTelStatusPill');
+
+    if (telephonyConfig.isConfigured) {
+      if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+      if (text) text.innerText = `Telephony: ${telephonyConfig.provider.toUpperCase()} (Live)`;
+      if (pill) {
+        pill.className = 'text-[10px] bg-emerald-500/20 text-emerald-300 font-semibold px-2 py-0.5 rounded border border-emerald-500/30';
+        pill.innerText = `Real PSTN Calling Active (${telephonyConfig.provider.toUpperCase()})`;
+      }
+    } else {
+      if (dot) dot.className = 'w-2 h-2 rounded-full bg-amber-400';
+      if (text) text.innerText = 'Telephony: Simulation';
+      if (pill) {
+        pill.className = 'text-[10px] bg-amber-500/20 text-amber-300 font-semibold px-2 py-0.5 rounded border border-amber-500/30';
+        pill.innerText = 'Simulation Mode';
+      }
+    }
+
+    // Populate inputs if modal exists
+    if (document.getElementById('inputTwilioSid')) {
+      document.getElementById('inputTwilioSid').value = telephonyConfig.twilioAccountSid || '';
+      document.getElementById('inputTwilioNumber').value = telephonyConfig.twilioPhoneNumber || '';
+    }
+    if (document.getElementById('inputExotelSid')) {
+      document.getElementById('inputExotelSid').value = telephonyConfig.exotelSid || '';
+      document.getElementById('inputExotelKey').value = telephonyConfig.exotelApiKey || '';
+      document.getElementById('inputExotelCallerId').value = telephonyConfig.exotelCallerId || '';
+    }
+
+    // Update Mobile IP
+    if (json.data.localUrls && json.data.localUrls.length > 0) {
+      const primaryUrl = json.data.localUrls[0].url;
+      const display = document.getElementById('modalLocalIpDisplay');
+      if (display) display.innerText = primaryUrl;
+      const qr = document.getElementById('modalMobileQrCode');
+      if (qr) qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(primaryUrl)}`;
+    }
+  } catch (err) {
+    console.warn('Failed to load telephony status:', err);
+  }
+}
+
+function openTelephonyModal() {
+  initTelephonyStatus();
+  document.getElementById('modalTelephonySettings').classList.remove('hidden');
+}
+
+function closeTelephonyModal() {
+  document.getElementById('modalTelephonySettings').classList.add('hidden');
+}
+
+function switchTelephonyTab(tab) {
+  const tabTwilio = document.getElementById('tabTelTwilio');
+  const tabExotel = document.getElementById('tabTelExotel');
+  const tabMobile = document.getElementById('tabTelMobile');
+
+  const contentTwilio = document.getElementById('telTabContentTwilio');
+  const contentExotel = document.getElementById('telTabContentExotel');
+  const contentMobile = document.getElementById('telTabContentMobile');
+
+  if (!tabTwilio || !tabExotel || !tabMobile) return;
+
+  tabTwilio.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition flex items-center gap-1.5';
+  tabExotel.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition flex items-center gap-1.5';
+  tabMobile.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition flex items-center gap-1.5';
+
+  contentTwilio.classList.add('hidden');
+  contentExotel.classList.add('hidden');
+  contentMobile.classList.add('hidden');
+
+  if (tab === 'twilio') {
+    tabTwilio.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-indigo-600/30 text-indigo-200 border border-indigo-500/40';
+    contentTwilio.classList.remove('hidden');
+  } else if (tab === 'exotel') {
+    tabExotel.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-indigo-600/30 text-indigo-200 border border-indigo-500/40';
+    contentExotel.classList.remove('hidden');
+  } else if (tab === 'mobile') {
+    tabMobile.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-indigo-600/30 text-indigo-200 border border-indigo-500/40';
+    contentMobile.classList.remove('hidden');
+  }
+}
+
+async function saveTelephonySettings() {
+  const twilioSid = (document.getElementById('inputTwilioSid') ? document.getElementById('inputTwilioSid').value : '').trim();
+  const twilioToken = (document.getElementById('inputTwilioToken') ? document.getElementById('inputTwilioToken').value : '').trim();
+  const twilioNumber = (document.getElementById('inputTwilioNumber') ? document.getElementById('inputTwilioNumber').value : '').trim();
+
+  const exotelSid = (document.getElementById('inputExotelSid') ? document.getElementById('inputExotelSid').value : '').trim();
+  const exotelKey = (document.getElementById('inputExotelKey') ? document.getElementById('inputExotelKey').value : '').trim();
+  const exotelToken = (document.getElementById('inputExotelToken') ? document.getElementById('inputExotelToken').value : '').trim();
+  const exotelCallerId = (document.getElementById('inputExotelCallerId') ? document.getElementById('inputExotelCallerId').value : '').trim();
+
+  const payload = {};
+  if (twilioSid && twilioNumber) {
+    payload.provider = 'twilio';
+    payload.twilioAccountSid = twilioSid;
+    if (twilioToken) payload.twilioAuthToken = twilioToken;
+    payload.twilioPhoneNumber = twilioNumber;
+  } else if (exotelSid && exotelKey) {
+    payload.provider = 'exotel';
+    payload.exotelSid = exotelSid;
+    payload.exotelApiKey = exotelKey;
+    if (exotelToken) payload.exotelToken = exotelToken;
+    payload.exotelCallerId = exotelCallerId;
+  } else {
+    payload.provider = 'simulation';
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/telephony/config`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json();
+    if (json.success) {
+      showToast('Telephony credentials saved successfully!', 'success');
+      await initTelephonyStatus();
+    } else {
+      showToast(json.error || 'Failed to save settings', 'error');
+    }
+  } catch (err) {
+    showToast('Error saving telephony credentials: ' + err.message, 'error');
+  }
+}
+
+async function testRealOutboundCallToMyPhone() {
+  const btn = document.getElementById('btnTestRealCall');
+  const statusBox = document.getElementById('realCallStatusBox');
+
+  if (btn) {
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Dispatching Real Call...';
+    btn.disabled = true;
+  }
+  if (statusBox) statusBox.innerText = 'Connecting to Cloud Telecom Gateway...';
+
+  try {
+    const res = await fetch(`${API_BASE}/calls/real-outbound`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone: '+91 8518900153',
+        name: 'Ritik Jain'
+      })
+    });
+    const json = await res.json();
+
+    if (json.realCallPlaced) {
+      showToast(`📞 Real Call Dispatched via ${json.provider}! Your phone +91 8518900153 is ringing now!`, 'success');
+      if (statusBox) statusBox.innerHTML = `<span class="text-emerald-400 font-bold">Call Active (SID: ${json.callSid || 'placed'})</span>`;
+    } else {
+      showToast(json.message || 'Cannot place real call without Twilio/Exotel credentials.', 'warning');
+      if (statusBox) statusBox.innerHTML = `<span class="text-amber-400 font-medium">${json.message}</span>`;
+    }
+  } catch (err) {
+    showToast('Failed to trigger real call: ' + err.message, 'error');
+    if (statusBox) statusBox.innerHTML = `<span class="text-rose-400">Error: ${err.message}</span>`;
+  } finally {
+    if (btn) {
+      btn.innerHTML = '<i class="fa-solid fa-phone-arrow-up-right"></i> Make Real Call to +91 8518900153';
+      btn.disabled = false;
+    }
+  }
 }
 

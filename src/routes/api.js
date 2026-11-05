@@ -681,7 +681,7 @@ router.post('/calls/auto-call', (req, res) => {
 });
 
 // Quick Test Endpoint: Test AI Voice Bot on User's Number (+91 8518900153)
-router.post('/calls/test-bot', (req, res) => {
+router.post('/calls/test-bot', async (req, res) => {
   try {
     const caller = callingService.getCallerProfile();
     const testNumber = caller.agentPhone || '+91 8518900153';
@@ -696,11 +696,88 @@ router.post('/calls/test-bot', (req, res) => {
       forceOverride: true
     });
 
+    // Check if real telephony provider is configured
+    const telConfig = callingService.getTelephonyConfig();
+    let realCallResult = null;
+
+    if (telConfig.isConfigured) {
+      try {
+        realCallResult = await callingService.makeRealOutboundCall({
+          targetPhone: testNumber,
+          targetName: testName,
+          scriptText: autoCall.dialogTurns[0]?.botAudioText,
+          callerIdMode: req.body.callerIdMode || 'unknown'
+        });
+      } catch (callErr) {
+        realCallResult = { success: false, error: callErr.message };
+      }
+    } else {
+      realCallResult = {
+        success: false,
+        realCallPlaced: false,
+        provider: 'simulation',
+        requiresCredentials: true,
+        message: 'No Twilio or Exotel credentials configured. Running in Browser Voice Simulation mode.'
+      };
+    }
+
     res.json({
       success: true,
-      message: `AI Voice Bot test call initiated on your number ${testNumber}!`,
-      data: autoCall
+      message: realCallResult && realCallResult.realCallPlaced
+        ? `Real PSTN call dispatched to ${testNumber} via ${realCallResult.provider}! Pick up your phone to hear the AI pitch.`
+        : `AI Voice Bot simulation active for ${testNumber}. (Enter Twilio/Exotel credentials in Telephony Settings to ring your physical SIM).`,
+      data: autoCall,
+      realCall: realCallResult,
+      telephonyStatus: telConfig
     });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// Telephony Status & Settings Endpoints
+router.get('/telephony/status', (req, res) => {
+  try {
+    const status = callingService.getTelephonyConfig();
+    const localUrls = callingService.getLocalNetworkUrls();
+    res.json({
+      success: true,
+      data: {
+        ...status,
+        localUrls
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/telephony/config', (req, res) => {
+  try {
+    const updated = callingService.updateTelephonyConfig(req.body);
+    res.json({
+      success: true,
+      message: 'Telephony configuration updated successfully!',
+      data: updated
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// Place Real Outbound Call via Twilio / Exotel
+router.post('/calls/real-outbound', async (req, res) => {
+  try {
+    const { phone, name, script, callerIdMode } = req.body;
+    const targetPhone = phone || '+91 8518900153';
+    const result = await callingService.makeRealOutboundCall({
+      targetPhone,
+      targetName: name || 'Ritik Jain',
+      scriptText: script,
+      callerIdMode: callerIdMode || 'user-sim'
+    });
+
+    res.json(result);
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
   }

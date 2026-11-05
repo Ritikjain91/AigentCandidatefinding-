@@ -41,6 +41,172 @@ class CallingService {
     return updated;
   }
 
+  // Cloud Telephony Provider Configuration & Status
+  getTelephonyConfig() {
+    const config = storage.getConfig();
+    const tel = config.telephony || {};
+    const provider = tel.provider || process.env.TELEPHONY_PROVIDER || (process.env.TWILIO_ACCOUNT_SID ? 'twilio' : (process.env.EXOTEL_SID ? 'exotel' : 'simulation'));
+    const isTwilioConfigured = !!((tel.twilioAccountSid || process.env.TWILIO_ACCOUNT_SID) && (tel.twilioAuthToken || process.env.TWILIO_AUTH_TOKEN) && (tel.twilioPhoneNumber || process.env.TWILIO_PHONE_NUMBER));
+    const isExotelConfigured = !!((tel.exotelSid || process.env.EXOTEL_SID) && (tel.exotelToken || process.env.EXOTEL_TOKEN) && (tel.exotelApiKey || process.env.EXOTEL_API_KEY));
+
+    return {
+      provider,
+      isConfigured: isTwilioConfigured || isExotelConfigured,
+      isTwilioConfigured,
+      isExotelConfigured,
+      twilioAccountSid: tel.twilioAccountSid || process.env.TWILIO_ACCOUNT_SID || '',
+      twilioAuthToken: tel.twilioAuthToken || process.env.TWILIO_AUTH_TOKEN ? '••••••••' : '',
+      twilioPhoneNumber: tel.twilioPhoneNumber || process.env.TWILIO_PHONE_NUMBER || '',
+      exotelSid: tel.exotelSid || process.env.EXOTEL_SID || '',
+      exotelToken: tel.exotelToken || process.env.EXOTEL_TOKEN ? '••••••••' : '',
+      exotelApiKey: tel.exotelApiKey || process.env.EXOTEL_API_KEY || '',
+      exotelCallerId: tel.exotelCallerId || process.env.EXOTEL_CALLER_ID || '',
+      userPhone: this.getCallerProfile().agentPhone,
+      modeDescription: (isTwilioConfigured || isExotelConfigured)
+        ? `Real PSTN Calling Active via ${provider.toUpperCase()}`
+        : 'Browser Simulation Mode (Requires Twilio or Exotel to ring physical mobile phones)'
+    };
+  }
+
+  updateTelephonyConfig(updates) {
+    const config = storage.getConfig();
+    const currentTel = config.telephony || {};
+    const newTel = {
+      ...currentTel,
+      ...updates
+    };
+    storage.updateConfig({ telephony: newTel });
+
+    // Sync with process.env for runtime calls
+    if (newTel.twilioAccountSid) process.env.TWILIO_ACCOUNT_SID = newTel.twilioAccountSid;
+    if (newTel.twilioAuthToken) process.env.TWILIO_AUTH_TOKEN = newTel.twilioAuthToken;
+    if (newTel.twilioPhoneNumber) process.env.TWILIO_PHONE_NUMBER = newTel.twilioPhoneNumber;
+    if (newTel.exotelSid) process.env.EXOTEL_SID = newTel.exotelSid;
+    if (newTel.exotelToken) process.env.EXOTEL_TOKEN = newTel.exotelToken;
+    if (newTel.exotelApiKey) process.env.EXOTEL_API_KEY = newTel.exotelApiKey;
+    if (newTel.exotelCallerId) process.env.EXOTEL_CALLER_ID = newTel.exotelCallerId;
+    if (newTel.provider) process.env.TELEPHONY_PROVIDER = newTel.provider;
+
+    return this.getTelephonyConfig();
+  }
+
+  // Place a real physical phone call via Twilio / Exotel gateway
+  async makeRealOutboundCall({ targetPhone, targetName = 'Prospect', scriptText, callerIdMode = 'user-sim' }) {
+    const config = storage.getConfig();
+    const tel = config.telephony || {};
+    const caller = this.getCallerProfile();
+
+    const cleanDigits = (targetPhone || '').replace(/[^0-9]/g, '');
+    const formattedTarget = cleanDigits.startsWith('91') && cleanDigits.length === 12
+      ? `+${cleanDigits}`
+      : cleanDigits.length === 10
+      ? `+91${cleanDigits}`
+      : `+${cleanDigits}`;
+
+    const speechScript = scriptText || `Hello ${targetName}! This is the Go Extra Mile partner merchant desk calling on behalf of ${caller.agentName}. We are offering exclusive merchant listing on the Go Extra Mile app with zero listing fees. To receive our partner onboarding link on WhatsApp, press 1.`;
+
+    const twilioSid = tel.twilioAccountSid || process.env.TWILIO_ACCOUNT_SID;
+    const twilioToken = tel.twilioAuthToken || process.env.TWILIO_AUTH_TOKEN;
+    const twilioFrom = tel.twilioPhoneNumber || process.env.TWILIO_PHONE_NUMBER;
+
+    if (twilioSid && twilioToken && twilioFrom) {
+      const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Aditi" language="en-IN">${speechScript}</Say>
+    <Pause length="1"/>
+    <Say voice="Polly.Aditi" language="en-IN">Press 1 on your phone keypad to receive the official Go Extra Mile onboarding link directly on your WhatsApp.</Say>
+    <Gather numDigits="1" action="/api/calls/twiml-callback" method="POST">
+    </Gather>
+</Response>`;
+
+      const params = new URLSearchParams({
+        To: formattedTarget,
+        From: twilioFrom,
+        Twiml: twiml
+      });
+
+      const basicAuth = Buffer.from(`${twilioSid}:${twilioToken}`).toString('base64');
+      const twilioRes = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Calls.json`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${basicAuth}`,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: params.toString()
+      });
+
+      const twilioData = await twilioRes.json();
+      if (!twilioRes.ok) {
+        throw new Error(`Twilio Call Error: ${twilioData.message || twilioRes.statusText} (Code: ${twilioData.code || twilioRes.status})`);
+      }
+
+      return {
+        success: true,
+        realCallPlaced: true,
+        provider: 'Twilio',
+        callSid: twilioData.sid,
+        status: twilioData.status,
+        targetPhone: formattedTarget,
+        message: `Real PSTN call dispatched to ${formattedTarget} via Twilio! Pick up your phone to hear the AI pitch.`
+      };
+    }
+
+    const exotelSid = tel.exotelSid || process.env.EXOTEL_SID;
+    const exotelToken = tel.exotelToken || process.env.EXOTEL_TOKEN;
+    const exotelKey = tel.exotelApiKey || process.env.EXOTEL_API_KEY;
+
+    if (exotelSid && exotelToken && exotelKey) {
+      const params = new URLSearchParams({
+        From: caller.agentPhone,
+        To: formattedTarget,
+        CallerId: tel.exotelCallerId || process.env.EXOTEL_CALLER_ID || exotelKey,
+        CallType: 'trans'
+      });
+
+      const basicAuth = Buffer.from(`${exotelKey}:${exotelToken}`).toString('base64');
+      const exotelRes = await fetch(`https://api.exotel.com/v1/Accounts/${exotelSid}/Calls/connect.json`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${basicAuth}`,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: params.toString()
+      });
+
+      const exotelData = await exotelRes.json();
+      if (!exotelRes.ok) {
+        throw new Error(`Exotel Call Error: ${exotelData.RestException ? exotelData.RestException.Message : exotelRes.statusText}`);
+      }
+
+      return {
+        success: true,
+        realCallPlaced: true,
+        provider: 'Exotel',
+        callSid: exotelData.Call ? exotelData.Call.Sid : 'exotel_call',
+        status: 'Initiated',
+        targetPhone: formattedTarget,
+        message: `Real call bridged to ${formattedTarget} via Exotel!`
+      };
+    }
+
+    // No credentials configured: explain simulation mode & direct dial options
+    const localUrls = this.getLocalNetworkUrls();
+    const mobileIp = localUrls.length > 0 ? localUrls[0].ip : 'localhost';
+
+    return {
+      success: false,
+      realCallPlaced: false,
+      provider: 'simulation',
+      requiresCredentials: true,
+      targetPhone: formattedTarget,
+      instructions: {
+        methodA: 'Add your Twilio Account SID, Auth Token & Phone Number in Telephony Settings to ring your physical SIM directly.',
+        methodB: `Open http://${mobileIp}:3000 on your mobile phone browser to make direct calls from your phone's SIM card.`
+      },
+      message: `No real Cloud Telephony Provider (Twilio or Exotel) is connected yet. Your phone (${formattedTarget}) cannot ring without a telecom gateway. The app is currently demonstrating the AI pitch via computer audio.`
+    };
+  }
+
   // Get local network IPs for connecting via mobile phone browser
   getLocalNetworkUrls() {
     const interfaces = os.networkInterfaces();
@@ -338,6 +504,7 @@ Always ask for explicit consent before sending the onboarding link to WhatsApp.`
       aiAgentConfig,
       botCanSpeak: true,
       audioVoice: 'Polly.Aditi (en-IN)',
+      telephonyStatus: this.getTelephonyConfig(),
       startedAt: new Date().toISOString()
     };
   }
