@@ -1,71 +1,275 @@
-/* Custom styles for AutomaticCallingBot */
+/* ==========================================================================
+   AutomaticCallingBot - Modern Dark UI Design System & Styles
+   ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap');
+
+/* --- Root Design Tokens --- */
+:root {
+  --color-bg-base: #070b14;
+  --color-bg-surface: #0f172a;
+  --color-bg-card: rgba(15, 23, 42, 0.85);
+  --color-bg-elevated: #1e293b;
+  --color-border-subtle: rgba(148, 163, 184, 0.12);
+  --color-border-hover: rgba(148, 163, 184, 0.25);
+  
+  --color-amber-glow: rgba(245, 158, 11, 0.35);
+  --color-purple-glow: rgba(139, 92, 246, 0.35);
+  --color-emerald-glow: rgba(16, 185, 129, 0.35);
+}
+
+/* --- Base Typography & Smooth Rendering --- */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--color-bg-base);
+  background-image: 
+    radial-gradient(at 15% 15%, rgba(99, 102, 241, 0.08) 0px, transparent 55%),
+    radial-gradient(at 85% 10%, rgba(245, 158, 11, 0.06) 0px, transparent 50%),
+    radial-gradient(at 50% 90%, rgba(139, 92, 246, 0.05) 0px, transparent 55%);
+  background-attachment: fixed;
+  color: #f1f5f9;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
 }
 
 code, pre, .font-mono {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
-/* Tab active style */
+/* --- Navigation Tabs --- */
 .nav-tab {
   color: #94a3b8;
-  transition: all 0.2s ease;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  font-weight: 500;
+  border: 1px solid transparent;
 }
 
 .nav-tab:hover {
-  color: #f1f5f9;
-  background-color: rgba(51, 65, 85, 0.5);
+  color: #f8fafc;
+  background-color: rgba(30, 41, 59, 0.7);
+  border-color: rgba(148, 163, 184, 0.15);
 }
 
 .nav-tab.active-tab {
-  background-color: #3b82f6;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.22), rgba(139, 92, 246, 0.22));
+  border: 1px solid rgba(139, 92, 246, 0.45);
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+  font-weight: 600;
+  box-shadow: 0 4px 16px -2px rgba(139, 92, 246, 0.35);
 }
 
-/* Animations */
+/* --- Scale Filter Chips --- */
+.scale-chip {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  user-select: none;
+}
+
+.scale-chip:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+}
+
+.active-scale-chip {
+  box-shadow: 0 4px 14px -1px rgba(245, 158, 11, 0.45);
+}
+
+/* --- Form Controls: Modern Dark Inputs & Selects --- */
+input[type="text"],
+input[type="email"],
+input[type="number"],
+input[type="search"],
+select,
+textarea {
+  background-color: #090e1a !important;
+  border: 1px solid rgba(148, 163, 184, 0.22) !important;
+  color: #f8fafc !important;
+  border-radius: 0.5rem;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+input[type="text"]:hover,
+input[type="email"]:hover,
+select:hover,
+textarea:hover {
+  border-color: rgba(148, 163, 184, 0.35) !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #8b5cf6 !important;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.25) !important;
+  background-color: #0f172a !important;
+  outline: none !important;
+}
+
+select {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-position: right 0.65rem center;
+  background-repeat: no-repeat;
+  background-size: 1rem 1rem;
+  padding-right: 2.2rem !important;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* Custom Checkbox */
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1.15rem;
+  height: 1.15rem;
+  border: 1.5px solid rgba(148, 163, 184, 0.4);
+  border-radius: 0.3rem;
+  background-color: #090e1a;
+  display: inline-grid;
+  place-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+input[type="checkbox"]:checked {
+  background-color: #f59e0b;
+  border-color: #f59e0b;
+}
+
+input[type="checkbox"]:checked::before {
+  content: "\f00c";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  font-size: 0.7rem;
+  color: #090e1a;
+}
+
+input[type="checkbox"]:focus {
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3);
+}
+
+/* Custom Radio */
+input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 1.5px solid rgba(148, 163, 184, 0.4);
+  border-radius: 50%;
+  background-color: #090e1a;
+  display: inline-grid;
+  place-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+input[type="radio"]:checked {
+  border-color: #8b5cf6;
+}
+
+input[type="radio"]:checked::before {
+  content: "";
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background-color: #8b5cf6;
+}
+
+/* --- Priority & Status Badges --- */
+.badge-tier-1 {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.12));
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  color: #fbbf24;
+  box-shadow: 0 2px 8px -1px rgba(245, 158, 11, 0.2);
+}
+
+.badge-tier-2 {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(126, 34, 206, 0.12));
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  color: #d8b4fe;
+  box-shadow: 0 2px 8px -1px rgba(168, 85, 247, 0.2);
+}
+
+.badge-tier-3 {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(29, 78, 216, 0.12));
+  border: 1px solid rgba(59, 130, 246, 0.45);
+  color: #93c5fd;
+  box-shadow: 0 2px 8px -1px rgba(59, 130, 246, 0.2);
+}
+
+/* --- Table Enhancements --- */
+table thead tr {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.9));
+  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+table tbody tr {
+  transition: background-color 0.15s ease;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+table tbody tr:hover {
+  background-color: rgba(30, 41, 59, 0.65) !important;
+}
+
+table tbody tr:nth-child(even) {
+  background-color: rgba(15, 23, 42, 0.28);
+}
+
+table tbody tr:nth-child(even):hover {
+  background-color: rgba(30, 41, 59, 0.65) !important;
+}
+
+/* Keep action buttons neatly aligned */
+table td:last-child {
+  white-space: nowrap;
+}
+
+/* --- Glassmorphism & Elevation --- */
+.card-glass {
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4);
+}
+
+.card-glass:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+/* --- Animations --- */
 @keyframes scaleIn {
   from {
     opacity: 0;
-    transform: scale(0.96);
+    transform: scale(0.96) translateY(4px);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) translateY(0);
   }
 }
 
 .animate-scale-in {
-  animation: scaleIn 0.18s ease-out forwards;
-}
-
-/* Priority Badges */
-.badge-tier-1 {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(217, 119, 6, 0.15));
-  border: 1px solid rgba(245, 158, 11, 0.4);
-  color: #fbbf24;
-}
-
-.badge-tier-2 {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(126, 34, 206, 0.15));
-  border: 1px solid rgba(168, 85, 247, 0.4);
-  color: #c084fc;
-}
-
-.badge-tier-3 {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(29, 78, 216, 0.15));
-  border: 1px solid rgba(59, 130, 246, 0.4);
-  color: #60a5fa;
+  animation: scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Toast animations */
 @keyframes toastIn {
   from {
-    transform: translateX(100%);
+    transform: translateX(110%);
     opacity: 0;
   }
   to {
@@ -80,35 +284,72 @@ code, pre, .font-mono {
     opacity: 1;
   }
   to {
-    transform: translateX(100%);
+    transform: translateX(110%);
     opacity: 0;
   }
 }
 
 .toast-enter {
-  animation: toastIn 0.25s ease-out forwards;
+  animation: toastIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .toast-exit {
-  animation: toastOut 0.25s ease-in forwards;
+  animation: toastOut 0.22s ease-in forwards;
 }
 
-/* Custom scrollbars */
+/* Modal backdrop blur */
+.modal-backdrop-blur {
+  background: rgba(2, 6, 23, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* --- Sound Wave Visualizer Equalizer (Bot Speaks) --- */
+@keyframes eqWave {
+  0%, 100% {
+    height: 6px;
+  }
+  50% {
+    height: 22px;
+  }
+}
+
+#botSpeakingWave span:nth-child(1) { animation: eqWave 0.7s infinite ease-in-out; }
+#botSpeakingWave span:nth-child(2) { animation: eqWave 0.5s infinite ease-in-out 0.1s; }
+#botSpeakingWave span:nth-child(3) { animation: eqWave 0.8s infinite ease-in-out 0.25s; }
+#botSpeakingWave span:nth-child(4) { animation: eqWave 0.6s infinite ease-in-out 0.15s; }
+#botSpeakingWave span:nth-child(5) { animation: eqWave 0.9s infinite ease-in-out 0.3s; }
+
+/* --- Custom Scrollbars --- */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: #090e1a;
 }
 
 ::-webkit-scrollbar-thumb {
   background: #334155;
-  border-radius: 4px;
+  border-radius: 9999px;
+  transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #64748b;
 }
 
+/* --- Button Press Micro-Interactions --- */
+button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+button {
+  transition: transform 0.12s ease, background 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}

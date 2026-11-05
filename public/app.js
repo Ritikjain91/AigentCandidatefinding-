@@ -416,10 +416,10 @@ function renderDecisionMakerRow(dm) {
   }
 
   const callButtonsHtml = isLimitReached ? `
-    <button onclick="if(confirm('Notice: ${dm.companyName} has already reached the maximum 2-call limit. Do you wish to override and call anyway?')) startAutomatedCallBot('${dm.id}', 'unknown');" class="bg-slate-800 hover:bg-slate-700 text-slate-400 font-medium px-2 py-1 rounded text-xs transition flex items-center gap-1 border border-slate-700" title="Max 2 calls reached (Click to override)">
+    <button onclick="showToast('Calling ${dm.companyName} with override on 2-call cap...', 'warning'); startAutomatedCallBot('${dm.id}', 'unknown');" class="bg-slate-800 hover:bg-slate-700 text-slate-400 font-medium px-2 py-1 rounded text-xs transition flex items-center gap-1 border border-slate-700" title="Max 2 calls reached (Click to call with override)">
       <i class="fa-solid fa-ban text-rose-400"></i> Called 2x
     </button>
-    <button onclick="if(confirm('Notice: ${dm.companyName} has already reached the maximum 2-call limit. Do you wish to override and call anyway?')) startCallFromMyNumber('${dm.id}');" class="bg-slate-800 hover:bg-slate-700 text-slate-400 font-medium px-2 py-1 rounded text-xs transition flex items-center gap-1 border border-slate-700" title="Max 2 calls reached (Click to override)">
+    <button onclick="showToast('Initiating manual call to ${dm.companyName} with override...', 'warning'); startCallFromMyNumber('${dm.id}');" class="bg-slate-800 hover:bg-slate-700 text-slate-400 font-medium px-2 py-1 rounded text-xs transition flex items-center gap-1 border border-slate-700" title="Max 2 calls reached (Click to call with override)">
       <i class="fa-solid fa-phone text-slate-500"></i> Manual
     </button>
   ` : `
@@ -493,7 +493,7 @@ function renderDashboard() {
   }
 
   let html = `
-    <table class="w-full text-left border-collapse">
+    <table class="w-full text-left border-collapse min-w-[880px]">
       <thead>
         <tr class="border-b border-slate-700 text-[11px] uppercase tracking-wider text-slate-400 font-semibold bg-slate-900/50">
           <th class="py-2.5 px-4">Decision-Maker</th>
@@ -523,7 +523,7 @@ function renderFullDecisionMakers() {
   }
 
   let html = `
-    <table class="w-full text-left border-collapse">
+    <table class="w-full text-left border-collapse min-w-[980px]">
       <thead>
         <tr class="border-b border-slate-700 text-[11px] uppercase tracking-wider text-slate-400 font-semibold bg-slate-900/50">
           <th class="py-2.5 px-4">Decision-Maker & Designation</th>
@@ -606,15 +606,15 @@ async function toggleVerification(id, newStatus) {
 }
 
 async function deleteDecisionMaker(id) {
-  if (!confirm('Are you sure you want to remove this decision-maker record? Auto-replenish will instantly generate a fresh replacement.')) return;
+  // Delete immediately without any popup or blocking confirmation dialog
   try {
     const res = await fetch(`${API_BASE}/decision-makers/${id}`, { method: 'DELETE' });
     const json = await res.json();
     if (json.success) {
       if (json.data && json.data.autoReplenished && json.data.newLead) {
-        showToast(`Contact removed. Auto-replenished replacement lead: ${json.data.newLead.fullName} (${json.data.newLead.designation} at ${json.data.newLead.companyName})!`, 'success');
+        showToast(`⚡ Lead removed & auto-replaced with fresh lead: ${json.data.newLead.fullName} (${json.data.newLead.designation} at ${json.data.newLead.companyName})!`, 'success');
       } else {
-        showToast(json.message || 'Contact removed', 'success');
+        showToast(json.message || 'Contact removed and auto-replenished', 'success');
       }
       await refreshAllData();
     } else {
