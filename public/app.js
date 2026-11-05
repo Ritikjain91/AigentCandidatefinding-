@@ -1532,12 +1532,49 @@ let activeAutoCallData = null;
 let autoCallTimerInterval = null;
 let autoCallSeconds = 0;
 let voiceSpeechEnabled = true;
+let speechResumeTimer = null;
+let cachedVoices = [];
+
+function loadVoices() {
+  if (typeof window !== 'undefined' && window.speechSynthesis) {
+    cachedVoices = window.speechSynthesis.getVoices();
+  }
+}
+if (typeof window !== 'undefined' && window.speechSynthesis) {
+  loadVoices();
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+function unlockSpeechAudio() {
+  if (typeof window !== 'undefined' && window.speechSynthesis) {
+    try {
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+    } catch (e) {}
+  }
+}
+
+// Keep speech synthesis active in Chromium/Chrome (prevents silent pause)
+function keepSpeechSynthesisAlive() {
+  if (speechResumeTimer) clearInterval(speechResumeTimer);
+  speechResumeTimer = setInterval(() => {
+    if (window.speechSynthesis && window.speechSynthesis.speaking) {
+      window.speechSynthesis.pause();
+      window.speechSynthesis.resume();
+    } else {
+      clearInterval(speechResumeTimer);
+      speechResumeTimer = null;
+    }
+  }, 9000);
+}
 
 function toggleVoiceSpeech() {
   voiceSpeechEnabled = !voiceSpeechEnabled;
   const icon = document.getElementById('voiceToggleIcon');
   const label = document.getElementById('voiceToggleLabel');
   if (voiceSpeechEnabled) {
+    unlockSpeechAudio();
     if (icon) icon.className = 'fa-solid fa-volume-high text-amber-400';
     if (label) label.innerText = 'Voice ON';
     showToast('Voice Audio Enabled', 'info');
@@ -1554,35 +1591,81 @@ function speakBotText(text, onDone = null) {
     if (onDone) setTimeout(onDone, 1200);
     return;
   }
-  window.speechSynthesis.cancel();
 
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.rate = 0.95;
-  utterance.pitch = 1.02;
+  unlockSpeechAudio();
 
-  const wave = document.getElementById('botSpeakingWave');
-  const statusLbl = document.getElementById('botSpeakingStatusLabel');
+  // Cancel prior utterance
+  try {
+    window.speechSynthesis.cancel();
+  } catch (e) {}
 
-  utterance.onstart = () => {
-    if (wave) wave.classList.remove('opacity-40');
-    if (statusLbl) statusLbl.innerText = 'AI Bot is Speaking...';
-  };
-  utterance.onend = () => {
-    if (statusLbl) statusLbl.innerText = 'Bot Ready';
-    if (onDone) setTimeout(onDone, 900);
-  };
-  utterance.onerror = () => {
-    if (statusLbl) statusLbl.innerText = 'Bot Ready';
-    if (onDone) onDone();
-  };
+  setTimeout(() => {
+    try {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.95;
+      utterance.pitch = 1.02;
+      utterance.volume = 1.0;
 
-  const voices = window.speechSynthesis.getVoices();
-  const inVoice = voices.find(v => v.lang.includes('en-IN') || v.name.includes('India')) ||
-                  voices.find(v => v.lang.startsWith('en')) ||
-                  voices[0];
-  if (inVoice) utterance.voice = inVoice;
+      const wave = document.getElementById('botSpeakingWave');
+      const statusLbl = document.getElementById('botSpeakingStatusLabel');
+      const forceBtnText = document.getElementById('btnForceSpeakText');
 
-  window.speechSynthesis.speak(utterance);
+      utterance.onstart = () => {
+        if (wave) wave.classList.remove('opacity-40');
+        if (statusLbl) statusLbl.innerText = 'AI Bot Speaking...';
+        if (forceBtnText) forceBtnText.innerText = '🔊 AI Voice Bot Speaking Aloud (Live Audio)';
+        keepSpeechSynthesisAlive();
+      };
+
+      utterance.onend = () => {
+        if (statusLbl) statusLbl.innerText = 'Bot Ready';
+        if (forceBtnText) forceBtnText.innerText = '🔊 AI Voice Bot Ready (Tap to Replay Speech)';
+        if (onDone) setTimeout(onDone, 700);
+      };
+
+      utterance.onerror = (e) => {
+        console.warn('SpeechSynthesis error:', e);
+        if (statusLbl) statusLbl.innerText = 'Bot Ready';
+        if (forceBtnText) forceBtnText.innerText = '🔊 Tap Here to Listen Aloud';
+        if (onDone) onDone();
+      };
+
+      const voices = cachedVoices.length > 0 ? cachedVoices : window.speechSynthesis.getVoices();
+      const inVoice = voices.find(v => v.lang.includes('en-IN') || v.name.includes('India') || v.name.includes('Aditi')) ||
+                      voices.find(v => v.lang.startsWith('en')) ||
+                      voices[0];
+      if (inVoice) {
+        utterance.voice = inVoice;
+      }
+
+      window.speechSynthesis.speak(utterance);
+    } catch (err) {
+      console.warn('speakBotText failed:', err);
+      if (onDone) onDone();
+    }
+  }, 60);
+}
+
+function replayCurrentBotSpeech() {
+  unlockSpeechAudio();
+  if (!activeAutoCallData || !activeAutoCallData.dialogTurns) {
+    showToast('No active call session to speak', 'warning');
+    return;
+  }
+
+  const turns = activeAutoCallData.dialogTurns;
+  const firstTurn = turns[0];
+  if (!firstTurn) return;
+
+  showToast('🔊 Playing AI Voice Bot Speech...', 'info');
+  speakBotText(firstTurn.botAudioText, () => {
+    if (turns[1]) {
+      setTimeout(() => {
+        if (!activeAutoCallData) return;
+        speakBotText(turns[1].botAudioText);
+      }, 800);
+    }
+  });
 }
 
 function addTranscriptBubble(sender, text, isSpecial = false) {
@@ -1617,6 +1700,8 @@ function addTranscriptBubble(sender, text, isSpecial = false) {
 }
 
 async function startAutomatedCallBot(dmId, callerIdMode = 'unknown') {
+  unlockSpeechAudio();
+  showToast('Connecting AI Voice Bot session...', 'info');
   try {
     const res = await fetch(`${API_BASE}/calls/auto-call`, {
       method: 'POST',
@@ -1667,6 +1752,7 @@ async function startAutoCallQueueCampaign(tier = 1) {
 
 // Dedicated 1-Click Function to Test AI Voice Bot Directly on User's Phone (+91 8518900153)
 async function testAiBotOnMyNumber(callerIdMode = 'unknown') {
+  unlockSpeechAudio();
   showToast('⚡ Connecting AI Voice Bot to your test phone (+91 8518900153)...', 'info');
   try {
     const res = await fetch(`${API_BASE}/calls/test-bot`, {
@@ -1685,7 +1771,7 @@ async function testAiBotOnMyNumber(callerIdMode = 'unknown') {
     if (json.realCall && json.realCall.realCallPlaced) {
       showToast(`📞 Real PSTN Call Placed via ${json.realCall.provider}! Your phone +91 8518900153 is ringing now!`, 'success');
     } else {
-      showToast('🔊 Simulation Active: Speaking via computer audio. (Enter Twilio/Exotel credentials to ring your physical SIM).', 'info');
+      showToast('🔊 AI Voice Bot Speaking Aloud: Listen to the pitch through your speakers!', 'info');
     }
   } catch (err) {
     showToast('AI test call error: ' + err.message, 'error');
@@ -1693,6 +1779,7 @@ async function testAiBotOnMyNumber(callerIdMode = 'unknown') {
 }
 
 async function startAutomatedCallBotCustom(name, phone, company, designation, callerIdMode = 'unknown') {
+  unlockSpeechAudio();
   try {
     const res = await fetch(`${API_BASE}/calls/auto-call`, {
       method: 'POST',
@@ -1840,21 +1927,31 @@ function launchAutoCallSession(callData, realCallData = null) {
 
   document.getElementById('modalAutoCallBot').classList.remove('hidden');
 
-  // Step 1: Greeting - Bot speaks directly!
-  const turn1 = callData.dialogTurns[0];
-  setTimeout(() => {
-    addTranscriptBubble('bot', turn1.botAudioText);
-    speakBotText(turn1.botAudioText);
-  }, 600);
+  // Trigger sound effect or speech immediately
+  unlockSpeechAudio();
 
-  // Step 2: Pitch
-  setTimeout(() => {
-    if (activeAutoCallData) {
-      const turn2 = callData.dialogTurns[1];
-      addTranscriptBubble('bot', turn2.botAudioText);
-      speakBotText(turn2.botAudioText);
-    }
-  }, 5500);
+  const forceBtn = document.getElementById('btnForceSpeakText');
+  if (forceBtn) forceBtn.innerText = '🔊 AI Voice Bot Speaking Aloud (Tap to Replay)';
+
+  // Step 1: Greeting - Bot speaks aloud immediately!
+  const turn1 = (callData.dialogTurns && callData.dialogTurns[0]) ? callData.dialogTurns[0] : null;
+  if (turn1) {
+    addTranscriptBubble('bot', turn1.botAudioText);
+    setTimeout(() => {
+      speakBotText(turn1.botAudioText, () => {
+        // Step 2: Pitch automatically speaks when Step 1 finishes
+        if (!activeAutoCallData) return;
+        const turn2 = (callData.dialogTurns && callData.dialogTurns[1]) ? callData.dialogTurns[1] : null;
+        if (turn2) {
+          setTimeout(() => {
+            if (!activeAutoCallData) return;
+            addTranscriptBubble('bot', turn2.botAudioText);
+            speakBotText(turn2.botAudioText);
+          }, 900);
+        }
+      });
+    }, 300);
+  }
 }
 
 function playFullBotSpeech() {
