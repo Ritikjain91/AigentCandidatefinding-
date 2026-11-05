@@ -1925,6 +1925,125 @@ function advanceBotStep(intent) {
   }
 }
 
+// ==========================================
+// TWO-WAY LIVE INTERNET VOICE CALLING (VOIP)
+// ==========================================
+
+let isMicListening = false;
+let activeSpeechRecognition = null;
+
+function toggleMicInteractiveMode() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    showToast('Your browser does not support Speech Recognition. Use Google Chrome or Microsoft Edge.', 'warning');
+    return;
+  }
+
+  if (isMicListening) {
+    stopMicListening();
+    return;
+  }
+
+  startMicListening();
+}
+
+function startMicListening() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) return;
+
+  const btn = document.getElementById('btnToggleMicCall');
+  const btnText = document.getElementById('btnToggleMicText');
+  const statusPill = document.getElementById('micCallStatus');
+  const icon = document.getElementById('micPulsingIcon');
+
+  try {
+    activeSpeechRecognition = new SpeechRecognition();
+    activeSpeechRecognition.continuous = false;
+    activeSpeechRecognition.interimResults = false;
+    activeSpeechRecognition.lang = 'en-IN';
+
+    activeSpeechRecognition.onstart = () => {
+      isMicListening = true;
+      if (btn) btn.className = 'bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow-md shadow-rose-600/30 shrink-0 animate-pulse';
+      if (btnText) btnText.innerText = 'Listening... Speak Now';
+      if (statusPill) {
+        statusPill.className = 'text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-1.5 py-0.5 rounded font-mono font-bold animate-pulse';
+        statusPill.innerText = '🎙️ Microphone Live (Listening)';
+      }
+      if (icon) icon.className = 'w-8 h-8 rounded-full bg-rose-500/30 border border-rose-500 flex items-center justify-center text-rose-300 shrink-0 animate-bounce';
+      showToast('Microphone active: Speak to the AI bot (e.g. "What are the fees?" or "Send me the link")', 'info');
+    };
+
+    activeSpeechRecognition.onresult = (event) => {
+      const speechResult = event.results[0][0].transcript;
+      stopMicListening();
+      handleUserVoiceInput(speechResult);
+    };
+
+    activeSpeechRecognition.onerror = (event) => {
+      console.warn('Speech recognition error:', event.error);
+      stopMicListening();
+      if (event.error !== 'no-speech') {
+        showToast('Mic error: ' + event.error, 'warning');
+      }
+    };
+
+    activeSpeechRecognition.onend = () => {
+      stopMicListening();
+    };
+
+    activeSpeechRecognition.start();
+  } catch (err) {
+    console.warn('Failed to start speech recognition:', err);
+    stopMicListening();
+    showToast('Could not access microphone: ' + err.message, 'error');
+  }
+}
+
+function stopMicListening() {
+  isMicListening = false;
+  if (activeSpeechRecognition) {
+    try { activeSpeechRecognition.stop(); } catch (e) {}
+    activeSpeechRecognition = null;
+  }
+
+  const btn = document.getElementById('btnToggleMicCall');
+  const btnText = document.getElementById('btnToggleMicText');
+  const statusPill = document.getElementById('micCallStatus');
+  const icon = document.getElementById('micPulsingIcon');
+
+  if (btn) btn.className = 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow-md shadow-indigo-600/30 shrink-0';
+  if (btnText) btnText.innerText = 'Speak to AI (Mic)';
+  if (statusPill) {
+    statusPill.className = 'text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded font-mono font-bold';
+    statusPill.innerText = 'Over Internet (No SIM Needed)';
+  }
+  if (icon) icon.className = 'w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-300 shrink-0';
+}
+
+function handleUserVoiceInput(spokenText) {
+  if (!activeAutoCallData) return;
+
+  addTranscriptBubble('prospect', spokenText);
+
+  const lower = spokenText.toLowerCase();
+
+  if (lower.includes('fee') || lower.includes('cost') || lower.includes('charge') || lower.includes('price') || lower.includes('commission')) {
+    advanceBotStep('cost_query');
+  } else if (lower.includes('yes') || lower.includes('send') || lower.includes('link') || lower.includes('whatsapp') || lower.includes('interested') || lower.includes('sure')) {
+    advanceBotStep('interested');
+  } else if (lower.includes('email') || lower.includes('mail') || lower.includes('proposal') || lower.includes('deck')) {
+    advanceBotStep('email_requested');
+  } else {
+    // Intelligent contextual response
+    setTimeout(() => {
+      const response = `I understand, ${activeAutoCallData.targetName}. On Go Extra Mile, brands get complete flexibility with zero upfront listing cost and direct customer outreach. Would you like me to share our official onboarding link on WhatsApp (${activeAutoCallData.targetNumber})?`;
+      addTranscriptBubble('bot', response);
+      speakBotText(response);
+    }, 800);
+  }
+}
+
 async function dispatchBotReferralWhatsApp() {
   if (!activeAutoCallData) return;
 

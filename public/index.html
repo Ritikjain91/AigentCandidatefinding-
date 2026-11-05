@@ -1421,9 +1421,28 @@
 
       <!-- Interactive Prospect Response Simulator & Actions -->
       <div class="bg-slate-900/70 border border-slate-700/60 rounded-xl p-4 space-y-3">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Simulate Prospect Interaction</span>
-          <span class="text-[11px] text-slate-400">Click a response to advance conversation</span>
+        <!-- Live Internet Voice Calling (Microphone Mode) -->
+        <div class="bg-indigo-950/60 border border-indigo-500/40 rounded-xl p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+          <div class="flex items-center gap-2.5">
+            <div id="micPulsingIcon" class="w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-300 shrink-0">
+              <i class="fa-solid fa-microphone"></i>
+            </div>
+            <div>
+              <div class="font-bold text-white text-xs flex items-center gap-1.5">
+                Direct Internet Voice Call with AI
+                <span id="micCallStatus" class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded font-mono font-bold">Over Internet (No SIM Needed)</span>
+              </div>
+              <p class="text-[11px] text-slate-300">Talk directly to the AI through your microphone. The AI listens, understands, and speaks back over the internet in real time.</p>
+            </div>
+          </div>
+          <button onclick="toggleMicInteractiveMode()" id="btnToggleMicCall" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow-md shadow-indigo-600/30 shrink-0">
+            <i class="fa-solid fa-microphone-lines"></i> <span id="btnToggleMicText">Speak to AI (Mic)</span>
+          </button>
+        </div>
+
+        <div class="flex items-center justify-between pt-1">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Or Click Quick Response</span>
+          <span class="text-[11px] text-slate-400">Advance conversation</span>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
