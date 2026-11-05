@@ -113,3 +113,4 @@ npm test
 - `POST /api/calls` - Log sales call discussion, outcome, and post-call follow-up trigger.
 - `GET /api/referral/templates` - Fetch pre-built merchant listing message templates.
 - `POST /api/referral/share` - Execute manual share with mandatory consent validation (`consentConfirmed: true`).
+

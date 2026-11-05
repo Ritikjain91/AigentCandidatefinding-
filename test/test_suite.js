@@ -3,6 +3,7 @@ const storage = require('../src/services/storageService');
 const dmService = require('../src/services/decisionMakerService');
 const referralService = require('../src/services/referralService');
 const researchService = require('../src/services/researchService');
+const callingService = require('../src/services/callingService');
 
 async function runTests() {
   console.log('🧪 Starting AutomaticCallingBot Test Suite...\n');
@@ -194,6 +195,28 @@ async function runTests() {
     assert.ok(queries.tier1Queries.some(q => q.includes('Owner') || q.includes('CEO') || q.includes('Managing Director')));
   });
 
+  // TEST 9: Caller Line Configuration (8518900153)
+  test('Requirement: User number 8518900153 is configured as the active caller line', () => {
+    const caller = callingService.getCallerProfile();
+    assert.strictEqual(caller.rawPhone, '8518900153');
+    assert.strictEqual(caller.agentPhone, '+91 8518900153');
+  });
+
+  // TEST 10: Calling Session & Live Pitch Generation
+  test('Requirement: Calling bot initiates session from 8518900153 to prospect with Go Extra Mile pitch', () => {
+    const dms = dmService.getAll();
+    const targetDm = dms[0];
+    const session = callingService.initiateCallSession({ decisionMakerId: targetDm.id });
+
+    assert.strictEqual(session.callerNumber, '+91 8518900153');
+    assert.strictEqual(session.targetName, targetDm.fullName);
+    assert.ok(session.dialTelUri.startsWith('tel:+'));
+    assert.ok(session.whatsappDialUri.includes('https://api.whatsapp.com/send'));
+    assert.ok(session.script.openingGreeting.includes('8518900153') || session.script.openingGreeting.includes('Ritik') || session.script.openingGreeting.includes(targetDm.fullName));
+    assert.ok(session.script.coreProposition.includes('Go Extra Mile'));
+    assert.ok(session.script.coreProposition.includes('exclusive brand deals') || session.script.coreProposition.includes('discounts'));
+  });
+
   console.log(`\n========================================`);
   console.log(`Total tests: ${passed + failed}`);
   console.log(`Passed: ${passed}`);
@@ -209,3 +232,4 @@ runTests().catch(err => {
   console.error('Fatal test error:', err);
   process.exit(1);
 });
+

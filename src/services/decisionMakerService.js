@@ -256,3 +256,4 @@ class DecisionMakerService {
 }
 
 module.exports = new DecisionMakerService();
+

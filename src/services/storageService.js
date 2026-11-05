@@ -77,6 +77,10 @@ class StorageService {
       current.compliance = { ...current.compliance, ...updates.compliance };
     }
 
+    if (updates.caller) {
+      current.caller = { ...current.caller, ...updates.caller };
+    }
+
     fs.writeFileSync(CONFIG_PATH, JSON.stringify(current, null, 2), 'utf-8');
     return current;
   }
@@ -226,3 +230,4 @@ class StorageService {
 }
 
 module.exports = new StorageService();
+

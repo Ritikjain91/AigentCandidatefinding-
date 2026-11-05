@@ -54,6 +54,16 @@ async function loadSettings() {
     if (json.success) {
       state.settings = json.data;
       updateReferralUiElements();
+
+      if (json.data.caller) {
+        state.callerProfile = json.data.caller;
+        const phoneEl = document.getElementById('headerCallerPhone');
+        if (phoneEl) phoneEl.innerText = json.data.caller.agentPhone;
+        const phoneInput = document.getElementById('settingsAgentPhone');
+        if (phoneInput) phoneInput.value = json.data.caller.agentPhone;
+        const nameInput = document.getElementById('settingsAgentName');
+        if (nameInput) nameInput.value = json.data.caller.agentName;
+      }
     }
   } catch (err) {
     console.error('Failed to load settings:', err);
@@ -371,11 +381,11 @@ function renderDecisionMakerRow(dm) {
       </td>
       <td class="py-3 px-4 text-right">
         <div class="flex items-center justify-end gap-1.5">
+          <button onclick="startCallFromMyNumber('${dm.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2.5 py-1 rounded text-xs transition flex items-center gap-1 shadow-sm" title="Call from your number +91 8518900153">
+            <i class="fa-solid fa-phone"></i> Call from 8518900153
+          </button>
           <button onclick="openShareModal('${dm.id}')" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 px-2 py-1 rounded text-xs transition" title="Share Go Extra Mile Link">
             <i class="fa-solid fa-share-nodes"></i> Share Link
-          </button>
-          <button onclick="openManualCallModal('${dm.id}')" class="bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 px-2 py-1 rounded text-xs transition" title="Log Call">
-            <i class="fa-solid fa-phone"></i>
           </button>
           <button onclick="deleteDecisionMaker('${dm.id}')" class="text-slate-500 hover:text-rose-400 p-1 transition" title="Delete">
             <i class="fa-regular fa-trash-can"></i>
@@ -729,8 +739,8 @@ async function openProspectProfile(companyId) {
             <button onclick="openShareModal('${dm.id}')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1 shadow">
               <i class="fa-solid fa-paper-plane"></i> Share Link
             </button>
-            <button onclick="openManualCallModal('${dm.id}')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1">
-              <i class="fa-solid fa-phone"></i> Call
+            <button onclick="startCallFromMyNumber('${dm.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-1.5 rounded-lg transition flex items-center gap-1 shadow">
+              <i class="fa-solid fa-phone"></i> Call from 8518900153
             </button>
           </div>
         </div>
@@ -888,6 +898,11 @@ function renderDiscoveryResults(data) {
             </a>
           </div>
           <p class="text-[11px] text-slate-400 italic">${c.verificationMethod}</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="callDiscoveredPerson('${c.fullName.replace(/'/g, "\\'")}', '${c.phone}', '${c.companyName.replace(/'/g, "\\'")}', '${c.designation.replace(/'/g, "\\'")}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-phone"></i> Call from 8518900153
+          </button>
         </div>
       </div>
     `;
@@ -1086,11 +1101,147 @@ function renderShareLogs() {
 }
 
 // ==========================================
+// ACTIVE CALLING BOT (FROM USER'S NUMBER: 8518900153)
+// ==========================================
+let activeCallSessionData = null;
+
+async function startCallFromMyNumber(dmId) {
+  const dm = state.decisionMakers.find(d => d.id === dmId);
+  if (!dm) {
+    showToast('Decision-maker not found', 'error');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/calls/initiate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ decisionMakerId: dmId })
+    });
+
+    const json = await res.json();
+    if (!json.success) {
+      showToast(json.error || 'Failed to initiate call', 'error');
+      return;
+    }
+
+    renderActiveCallModal(json.data);
+  } catch (err) {
+    showToast('Network error: ' + err.message, 'error');
+  }
+}
+
+async function callDiscoveredPerson(fullName, phone, companyName, designation) {
+  try {
+    const res = await fetch(`${API_BASE}/calls/initiate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customPhone: phone,
+        customName: fullName,
+        customCompany: companyName,
+        customDesignation: designation
+      })
+    });
+
+    const json = await res.json();
+    if (!json.success) {
+      showToast(json.error || 'Failed to initiate call', 'error');
+      return;
+    }
+
+    json.data.targetName = fullName;
+    json.data.targetCompany = companyName;
+    json.data.targetDesignation = designation;
+
+    renderActiveCallModal(json.data);
+  } catch (err) {
+    showToast('Error initiating call: ' + err.message, 'error');
+  }
+}
+
+function renderActiveCallModal(sess) {
+  activeCallSessionData = sess;
+
+  document.getElementById('activeCallMyNumber').innerText = sess.callerNumber;
+  document.getElementById('activeCallTargetName').innerText = sess.targetName;
+  document.getElementById('activeCallTargetRole').innerText = `${sess.targetDesignation || 'Executive'} • ${sess.targetCompany || 'Merchant'}`;
+  document.getElementById('activeCallTargetPhone').innerText = sess.targetNumber;
+
+  // Direct Dial Links
+  document.getElementById('btnDirectDialTel').href = sess.dialTelUri;
+  document.getElementById('btnDirectDialWhatsApp').href = sess.whatsappDialUri;
+
+  // Live In-Call Script
+  document.getElementById('scriptGreeting').innerText = `"${sess.script.openingGreeting}"`;
+  document.getElementById('scriptProposition').innerText = `"${sess.script.coreProposition}"`;
+  document.getElementById('scriptCta').innerHTML = `"${sess.script.callToAction} ${sess.script.objectionHandled}"`;
+
+  document.getElementById('modalActiveCall').classList.remove('hidden');
+  showToast(`Active call session initiated from your number ${sess.callerNumber}!`, 'success');
+}
+
+function closeActiveCallModal() {
+  document.getElementById('modalActiveCall').classList.add('hidden');
+  activeCallSessionData = null;
+}
+
+async function finishActiveCall(andShareReferral = false) {
+  if (!activeCallSessionData) return;
+
+  const outcome = document.getElementById('activeCallOutcomeSelect').value;
+  const consent = document.getElementById('activeCallConsentChecked').checked;
+
+  try {
+    const res = await fetch(`${API_BASE}/calls`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        companyId: activeCallSessionData.companyId,
+        decisionMakerId: activeCallSessionData.decisionMakerId,
+        outcome,
+        notes: `Call from agent line ${activeCallSessionData.callerNumber} to ${activeCallSessionData.targetName} (${activeCallSessionData.targetDesignation} - ${activeCallSessionData.targetCompany}). Outcome: ${outcome}.`,
+        referralShared: andShareReferral,
+        consentVerified: consent,
+        channel: andShareReferral ? 'WhatsApp' : null
+      })
+    });
+
+    const json = await res.json();
+    if (!json.success) {
+      showToast(json.error || 'Failed to save call record', 'error');
+      return;
+    }
+
+    showToast('Call logged successfully!', 'success');
+    closeActiveCallModal();
+    await refreshAllData();
+
+    if (andShareReferral) {
+      if (!consent) {
+        showToast('Consent confirmation required to dispatch referral link.', 'error');
+        return;
+      }
+      openShareModal(activeCallSessionData.decisionMakerId);
+      document.getElementById('shareConsentCheckbox').checked = true;
+      document.getElementById('shareProspectName').value = activeCallSessionData.targetName;
+      document.getElementById('shareCompanyName').value = activeCallSessionData.targetCompany;
+      document.getElementById('sharePhone').value = activeCallSessionData.targetNumber;
+      updateSharePreview();
+    }
+  } catch (err) {
+    showToast('Failed to complete call: ' + err.message, 'error');
+  }
+}
+
+// ==========================================
 // SETTINGS
 // ==========================================
 async function saveSettings() {
   const url = document.getElementById('settingsReferralUrl').value.trim();
   const pitch = document.getElementById('settingsPitch').value.trim();
+  const agentPhone = document.getElementById('settingsAgentPhone') ? document.getElementById('settingsAgentPhone').value.trim() : '+91 8518900153';
+  const agentName = document.getElementById('settingsAgentName') ? document.getElementById('settingsAgentName').value.trim() : 'Ritik Jain';
 
   // Guardrail check: Referral code GOMILES must be in the URL
   if (!url.includes('code=GOMILES')) {
@@ -1107,6 +1258,10 @@ async function saveSettings() {
           officialUrl: url,
           referralCode: 'GOMILES',
           salesPitch: pitch
+        },
+        caller: {
+          agentPhone,
+          agentName
         }
       })
     });
@@ -1117,7 +1272,7 @@ async function saveSettings() {
       return;
     }
 
-    showToast('Settings saved successfully with referral code GOMILES protected.', 'success');
+    showToast('Settings & Caller Line saved successfully!', 'success');
     await loadSettings();
   } catch (err) {
     showToast('Error saving settings: ' + err.message, 'error');
@@ -1146,3 +1301,4 @@ function showToast(message, type = 'info') {
     setTimeout(() => toast.remove(), 250);
   }, 3500);
 }
+

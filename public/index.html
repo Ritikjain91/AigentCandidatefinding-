@@ -86,9 +86,11 @@
         <span class="text-amber-400 font-semibold flex items-center gap-1"><i class="fa-solid fa-bullseye"></i> Sales Objective:</span>
         <span class="text-slate-300">Introduce Go Extra Mile and convince relevant companies to list their products, exclusive offers, discounts and promotional deals on the platform.</span>
       </div>
-      <div class="hidden md:flex items-center gap-2 text-slate-400">
-        <i class="fa-solid fa-shield-halved text-emerald-400"></i>
-        <span>No customer-care contacts &bull; Explicit consent required</span>
+      <div class="hidden md:flex items-center gap-3 text-slate-300">
+        <span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs px-2.5 py-1 rounded-md flex items-center gap-1.5 shadow-sm">
+          <i class="fa-solid fa-phone text-emerald-400"></i> Active Caller Line: <strong id="headerCallerPhone" class="font-mono text-emerald-200">+91 8518900153</strong>
+        </span>
+        <span class="text-slate-400 text-xs">&bull; No customer-care contacts</span>
       </div>
     </div>
   </div>
@@ -528,6 +530,27 @@
             <label class="block text-xs font-semibold text-slate-300 mb-1">Platform Sales Objective Pitch</label>
             <textarea id="settingsPitch" rows="2" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-indigo-500">Introduce Go Extra Mile and convince relevant companies to list their products, exclusive offers, discounts and promotional deals on the platform.</textarea>
           </div>
+
+          <!-- Caller Number & Agent Profile Configuration -->
+          <div class="border-t border-slate-700/80 pt-4 space-y-3">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
+              <i class="fa-solid fa-phone-volume"></i> Caller Line & Calling Bot Configuration
+            </h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Your Caller Phone Number *</label>
+                <div class="flex items-center gap-2">
+                  <input type="text" id="settingsAgentPhone" value="+91 8518900153" class="flex-1 bg-slate-900 border border-slate-700 text-xs font-mono font-bold text-emerald-300 rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-500">
+                </div>
+                <p class="text-[11px] text-slate-400 mt-1">Calls initiated will originate from or bridge through this number.</p>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Agent / Caller Name</label>
+                <input type="text" id="settingsAgentName" value="Ritik Jain" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-emerald-500">
+                <p class="text-[11px] text-slate-400 mt-1">Introduced during call greetings and pitch.</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="border-t border-slate-700/80 pt-4 space-y-3">
@@ -879,6 +902,123 @@
     </div>
   </div>
 
+  <!-- MODAL 6: ACTIVE CALL & LIVE SCRIPT ASSISTANT -->
+  <div id="modalActiveCall" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 animate-scale-in max-h-[92vh] overflow-y-auto">
+      
+      <!-- Call Header -->
+      <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+        <div class="flex items-center gap-3">
+          <div class="relative w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-phone-volume animate-pulse"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              Calling Decision-Maker from My Number
+              <span class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">LIVE CALL</span>
+            </h3>
+            <p class="text-xs text-slate-400">Caller ID: <span id="activeCallMyNumber" class="text-emerald-300 font-mono font-bold">+91 8518900153</span></p>
+          </div>
+        </div>
+        <button onclick="closeActiveCallModal()" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <!-- Prospect Contact Card -->
+      <div class="bg-slate-900/90 border border-slate-700 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <h4 id="activeCallTargetName" class="font-bold text-white text-base">Prospect Name</h4>
+            <span id="activeCallTargetTier" class="badge-tier-1 text-[10px] font-bold px-2 py-0.5 rounded-full">1st Preference</span>
+          </div>
+          <p id="activeCallTargetRole" class="text-xs text-amber-300 font-medium">Managing Director &bull; Company Name</p>
+          <div class="text-xs text-slate-300 font-mono flex items-center gap-2 pt-1">
+            <i class="fa-solid fa-phone text-emerald-400"></i>
+            <span id="activeCallTargetPhone" class="font-bold text-emerald-200">+91 98200 00000</span>
+          </div>
+        </div>
+
+        <!-- Direct Connect Buttons -->
+        <div class="flex flex-col gap-2 min-w-[190px]">
+          <a id="btnDirectDialTel" href="tel:" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20">
+            <i class="fa-solid fa-phone"></i> Dial on Phone / Device
+          </a>
+          <a id="btnDirectDialWhatsApp" href="#" target="_blank" class="bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold text-xs px-3.5 py-1.5 rounded-lg transition flex items-center justify-center gap-2 border border-slate-600">
+            <i class="fa-brands fa-whatsapp text-emerald-400"></i> Dial via WhatsApp
+          </a>
+        </div>
+      </div>
+
+      <!-- Live Sales Pitch Assistant for Go Extra Mile -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+            <i class="fa-solid fa-comments text-amber-400"></i> Interactive Pitch Script & Objection Handler
+          </h4>
+          <span class="text-[11px] text-slate-400">Go Extra Mile Merchant Listing</span>
+        </div>
+
+        <div class="space-y-2.5 text-xs">
+          <!-- Step 1: Greeting -->
+          <div class="bg-slate-900/70 border border-slate-800 rounded-lg p-3 space-y-1">
+            <div class="text-[10px] uppercase font-bold text-indigo-400">1. Opening Greeting</div>
+            <p id="scriptGreeting" class="text-slate-200 italic leading-relaxed">
+              "Hello Rajesh! This is Ritik calling from Go Extra Mile. I hope I caught you at a good time."
+            </p>
+          </div>
+
+          <!-- Step 2: Sales Objective Proposition -->
+          <div class="bg-slate-900/70 border border-amber-500/30 rounded-lg p-3 space-y-1">
+            <div class="text-[10px] uppercase font-bold text-amber-400">2. Sales Pitch: Merchant Offers & Discounts Listing</div>
+            <p id="scriptProposition" class="text-slate-200 leading-relaxed">
+              "Go Extra Mile connects thousands of active consumers seeking exclusive brand discounts and promotional deals. We would love to feature your brand catalog and exclusive offers with zero upfront listing fees and complete pricing autonomy."
+            </p>
+          </div>
+
+          <!-- Step 3: Call to Action & Referral Onboarding -->
+          <div class="bg-slate-900/70 border border-slate-800 rounded-lg p-3 space-y-1">
+            <div class="text-[10px] uppercase font-bold text-emerald-400">3. Onboarding Offer via Referral Link</div>
+            <p id="scriptCta" class="text-slate-200 leading-relaxed">
+              "I can send our official merchant onboarding link directly to your WhatsApp (<strong class="text-yellow-300 font-mono">https://www.goextramile.in/r?code=GOMILES</strong>) so you can review the partnership and upload your offers."
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- In-Call Outcome & Referral Follow-up -->
+      <div class="border-t border-slate-700/80 pt-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300">Call Outcome & Post-Call Action</h4>
+          <div class="flex items-center gap-2">
+            <label class="flex items-center gap-1.5 text-xs text-amber-300 cursor-pointer">
+              <input type="checkbox" id="activeCallConsentChecked" checked class="rounded text-amber-500">
+              <span>Decision-maker agreed to receive link</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <select id="activeCallOutcomeSelect" class="bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200 focus:outline-none">
+            <option value="Interested">Interested in Go Extra Mile Listing</option>
+            <option value="Follow-up Requested">Follow-up Requested with Details</option>
+            <option value="Call Completed">Call Completed</option>
+            <option value="Not Interested">Not Interested Currently</option>
+            <option value="No Answer">No Answer / Left Voicemail</option>
+          </select>
+
+          <div class="flex items-center gap-2">
+            <button onclick="finishActiveCall(false)" class="bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold text-xs px-3.5 py-2 rounded-lg transition">
+              Log Call Only
+            </button>
+            <button onclick="finishActiveCall(true)" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-lg transition flex items-center gap-1.5 shadow-lg shadow-amber-500/20">
+              <i class="fa-solid fa-paper-plane"></i> Send Referral Link to WhatsApp
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- TOAST NOTIFICATION CONTAINER -->
   <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
@@ -886,3 +1026,4 @@
   <script src="app.js"></script>
 </body>
 </html>
+

@@ -72,5 +72,15 @@
   "compliance": {
     "strictConsentRequired": true,
     "consentDisclaimer": "In compliance with telecom and data regulations, promotional messages and referral links must only be sent with explicit prospect consent and authorization. Automated spamming is strictly prohibited."
+  },
+  "caller": {
+    "agentPhone": "+91 8518900153",
+    "rawPhone": "8518900153",
+    "agentName": "Ritik Jain",
+    "companyName": "Go Extra Mile Partnerships",
+    "callMode": "device-dialer",
+    "enableBridge": true,
+    "enableAiPitchAssistant": true
   }
 }
+

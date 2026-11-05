@@ -251,6 +251,38 @@
   ],
   "shareLogs": [
     {
+      "id": "share_1793853159274",
+      "timestamp": "2026-11-05T04:32:39.275Z",
+      "referralUrl": "https://www.goextramile.in/r?code=GOMILES",
+      "referralCode": "GOMILES",
+      "companyId": null,
+      "decisionMakerId": null,
+      "recipientName": "Karan",
+      "recipientPhone": "+919811055490",
+      "recipientEmail": null,
+      "channel": "WhatsApp",
+      "consentConfirmed": true,
+      "consentNote": "Decision maker agreed during call",
+      "messageSnippet": "Hi Karan,\n\nThank you for taking the time to speak today regarding Your Business partnering with Go Extra Mile! As discussed, Go Extra Mile gives your ...",
+      "trigger": "Manual Share"
+    },
+    {
+      "id": "share_1793852154353",
+      "timestamp": "2026-11-05T04:15:54.353Z",
+      "referralUrl": "https://www.goextramile.in/r?code=GOMILES",
+      "referralCode": "GOMILES",
+      "companyId": null,
+      "decisionMakerId": null,
+      "recipientName": "Karan",
+      "recipientPhone": "+919811055490",
+      "recipientEmail": null,
+      "channel": "WhatsApp",
+      "consentConfirmed": true,
+      "consentNote": "Decision maker agreed during call",
+      "messageSnippet": "Hi Karan,\n\nThank you for taking the time to speak today regarding Your Business partnering with Go Extra Mile! As discussed, Go Extra Mile gives your ...",
+      "trigger": "Manual Share"
+    },
+    {
       "id": "share_1793852068494",
       "timestamp": "2026-11-05T04:14:28.494Z",
       "referralUrl": "https://www.goextramile.in/r?code=GOMILES",

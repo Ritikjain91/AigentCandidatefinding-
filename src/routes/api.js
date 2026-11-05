@@ -4,6 +4,7 @@ const storage = require('../services/storageService');
 const dmService = require('../services/decisionMakerService');
 const researchService = require('../services/researchService');
 const referralService = require('../services/referralService');
+const callingService = require('../services/callingService');
 
 // ==========================================
 // SETTINGS & CONFIGURATION
@@ -403,4 +404,35 @@ router.get('/referral/logs', (req, res) => {
   }
 });
 
+// ==========================================
+// CALLER PROFILE & DIALER SESSIONS
+// ==========================================
+router.get('/caller-profile', (req, res) => {
+  try {
+    const profile = callingService.getCallerProfile();
+    res.json({ success: true, data: profile });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.put('/caller-profile', (req, res) => {
+  try {
+    const updated = callingService.updateCallerProfile(req.body);
+    res.json({ success: true, message: 'Caller profile and agent number updated.', data: updated });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/calls/initiate', (req, res) => {
+  try {
+    const session = callingService.initiateCallSession(req.body);
+    res.json({ success: true, data: session });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;
+
