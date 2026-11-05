@@ -148,6 +148,58 @@ class ReferralService {
       composedMessage: composed
     };
   }
+
+  // Compose and log merchant email proposal to run deals on Go Extra Mile app
+  sendEmailProposal({
+    companyId,
+    decisionMakerId,
+    recipientName,
+    recipientEmail,
+    companyName,
+    consentConfirmed = true,
+    customSubject,
+    customBody
+  }) {
+    const config = this.getReferralConfig();
+    const composed = this.composeMessage({
+      templateId: 'tpl_email_merchant_campaign',
+      prospectName: recipientName,
+      companyName: companyName || 'your brand'
+    });
+
+    const subject = customSubject || composed.subject;
+    const body = customBody || composed.body;
+
+    const shareLinks = this.generateShareLinks({
+      email: recipientEmail,
+      messageText: body,
+      subjectText: subject
+    });
+
+    const logEntry = storage.logShare({
+      companyId: companyId || null,
+      decisionMakerId: decisionMakerId || null,
+      recipientName,
+      recipientEmail: recipientEmail || null,
+      channel: 'Email',
+      referralUrl: config.officialUrl,
+      referralCode: config.referralCode,
+      consentConfirmed: true,
+      consentNote: 'Decision-maker requested official Go Extra Mile campaign proposal & onboarding link via email.',
+      messageSnippet: body.slice(0, 150) + '...',
+      trigger: 'Email Merchant Proposal'
+    });
+
+    return {
+      success: true,
+      log: logEntry,
+      subject,
+      body,
+      mailtoUrl: shareLinks.mailtoUrl,
+      referralUrl: config.officialUrl,
+      referralCode: config.referralCode
+    };
+  }
 }
 
 module.exports = new ReferralService();

@@ -234,6 +234,13 @@ class CallingService {
         botAudioText: `May I send our official merchant onboarding portal link directly to your WhatsApp at ${targetPhone} so you can review onboarding details and list your brand offers?`,
         expectedProspectResponse: 'Yes, send it on WhatsApp.',
         botResponse: `Sending it right now! Your official partner link is https://www.goextramile.in/r?code=GOMILES with partner code GOMILES. Thank you, ${targetName}!`
+      },
+      {
+        step: 5,
+        title: 'Email Proposal & Campaign Guidelines',
+        botAudioText: `I can also email our complete merchant onboarding deck and referral link directly to your email, detailing how to run ${targetCompany}'s deals and exclusive offers on the Go Extra Mile app.`,
+        expectedProspectResponse: 'Yes, email the campaign proposal.',
+        botResponse: `Perfect! I am dispatching the full merchant proposal and link https://www.goextramile.in/r?code=GOMILES to your email right away!`
       }
     ];
 
@@ -268,6 +275,7 @@ Always ask for explicit consent before sending the onboarding link to WhatsApp.`
       callerNumber: caller.agentPhone,
       callerName: caller.agentName,
       targetNumber: targetPhone,
+      targetEmail: dm ? dm.email : null,
       targetName,
       targetCompany,
       targetDesignation,

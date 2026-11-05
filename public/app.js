@@ -387,8 +387,11 @@ function renderDecisionMakerRow(dm) {
           <button onclick="startCallFromMyNumber('${dm.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2 py-1 rounded text-xs transition flex items-center gap-1 shadow-sm" title="Call from your number +91 8518900153">
             <i class="fa-solid fa-phone"></i> Call (8518900153)
           </button>
+          <button onclick="openEmailProposalModal('${dm.id}')" class="bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/40 px-2 py-1 rounded text-xs transition flex items-center gap-1" title="Email proposal to run deals on Go Extra Mile app">
+            <i class="fa-solid fa-envelope"></i> Mail
+          </button>
           <button onclick="openShareModal('${dm.id}')" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 px-2 py-1 rounded text-xs transition" title="Share Go Extra Mile Link">
-            <i class="fa-solid fa-share-nodes"></i> Share Link
+            <i class="fa-solid fa-share-nodes"></i> Share
           </button>
           <button onclick="deleteDecisionMaker('${dm.id}')" class="text-slate-500 hover:text-rose-400 p-1 transition" title="Delete">
             <i class="fa-regular fa-trash-can"></i>
@@ -743,7 +746,10 @@ async function openProspectProfile(companyId) {
               <i class="fa-solid fa-robot"></i> Auto-Call
             </button>
             <button onclick="startCallFromMyNumber('${dm.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1 shadow">
-              <i class="fa-solid fa-phone"></i> Call from 8518900153
+              <i class="fa-solid fa-phone"></i> Call
+            </button>
+            <button onclick="openEmailProposalModal('${dm.id}')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1 shadow">
+              <i class="fa-solid fa-envelope"></i> Mail
             </button>
             <button onclick="openShareModal('${dm.id}')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1 shadow">
               <i class="fa-solid fa-paper-plane"></i> Share
@@ -1499,6 +1505,18 @@ function advanceBotStep(intent) {
         dispatchBotReferralWhatsApp();
       }, 1500);
     }, 800);
+  } else if (intent === 'email_requested') {
+    addTranscriptBubble('prospect', 'Can you please email me the official merchant campaign proposal and onboarding link?');
+    setTimeout(() => {
+      const emailTarget = activeAutoCallData.targetEmail || 'your email';
+      const closing = `Certainly, ${activeAutoCallData.targetName}! I am sending our complete Go Extra Mile merchant proposal and partner registration link (https://www.goextramile.in/r?code=GOMILES) directly to ${emailTarget}. Our partnerships team will assist you with listing your deals!`;
+      addTranscriptBubble('bot', closing, true);
+      speakBotText(closing);
+
+      setTimeout(() => {
+        dispatchBotReferralEmail();
+      }, 1500);
+    }, 800);
   }
 }
 
@@ -1552,6 +1570,123 @@ function endAutoCall() {
   if (!activeAutoCallData) return;
   closeAutoCallModal();
   showToast('Automated call session ended.', 'info');
+}
+
+async function dispatchBotReferralEmail() {
+  if (!activeAutoCallData) return;
+
+  const dm = state.decisionMakers.find(d => d.id === activeAutoCallData.decisionMakerId);
+  const email = (dm && dm.email) ? dm.email : (activeAutoCallData.targetEmail || '');
+
+  openEmailProposalModal(activeAutoCallData.decisionMakerId, {
+    recipientName: activeAutoCallData.targetName,
+    companyName: activeAutoCallData.targetCompany,
+    recipientEmail: email
+  });
+}
+
+// ==========================================
+// EMAIL MERCHANT PROPOSAL MODAL & ACTIONS
+// ==========================================
+let activeEmailProposalData = null;
+
+async function openEmailProposalModal(dmId, overrideData = null) {
+  let dm = null;
+  if (dmId) {
+    dm = state.decisionMakers.find(d => d.id === dmId);
+  }
+
+  const name = overrideData ? overrideData.recipientName : (dm ? dm.fullName : 'Partner');
+  const company = overrideData ? overrideData.companyName : (dm ? dm.companyName : 'your brand');
+  const email = overrideData ? overrideData.recipientEmail : (dm ? (dm.email || '') : '');
+  const companyId = dm ? dm.companyId : (activeAutoCallData ? activeAutoCallData.companyId : null);
+
+  activeEmailProposalData = {
+    decisionMakerId: dmId,
+    companyId,
+    name,
+    company,
+    email
+  };
+
+  document.getElementById('emailPropName').value = name;
+  document.getElementById('emailPropCompany').value = company;
+  document.getElementById('emailPropAddress').value = email;
+
+  const url = state.settings.referral?.officialUrl || 'https://www.goextramile.in/r?code=GOMILES';
+  const code = state.settings.referral?.referralCode || 'GOMILES';
+
+  const tpl = state.templates.find(t => t.id === 'tpl_email_merchant_campaign') || state.templates.find(t => t.type === 'email') || state.templates[0];
+  const subject = (tpl.subject || 'Run {{companyName}}\'s Deals & Exclusive Offers on Go Extra Mile App')
+    .replace(/{{name}}/g, name)
+    .replace(/{{companyName}}/g, company);
+
+  const body = (tpl.body || '')
+    .replace(/{{name}}/g, name)
+    .replace(/{{companyName}}/g, company)
+    .replace(/{{referralUrl}}/g, url)
+    .replace(/{{referralCode}}/g, code);
+
+  document.getElementById('emailPropSubject').value = subject;
+  document.getElementById('emailPropBody').value = body;
+
+  document.getElementById('modalEmailProposal').classList.remove('hidden');
+}
+
+function closeEmailProposalModal() {
+  document.getElementById('modalEmailProposal').classList.add('hidden');
+  activeEmailProposalData = null;
+}
+
+function copyEmailProposalBody() {
+  const body = document.getElementById('emailPropBody').value;
+  navigator.clipboard.writeText(body).then(() => {
+    showToast('Email proposal body & referral link copied to clipboard!', 'success');
+  });
+}
+
+async function executeSendEmailProposal() {
+  const name = document.getElementById('emailPropName').value.trim();
+  const company = document.getElementById('emailPropCompany').value.trim();
+  const email = document.getElementById('emailPropAddress').value.trim();
+  const subject = document.getElementById('emailPropSubject').value.trim();
+  const body = document.getElementById('emailPropBody').value.trim();
+
+  if (!email) {
+    showToast('Please enter recipient email address', 'error');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/referral/email-proposal`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        companyId: activeEmailProposalData ? activeEmailProposalData.companyId : null,
+        decisionMakerId: activeEmailProposalData ? activeEmailProposalData.decisionMakerId : null,
+        recipientName: name,
+        recipientEmail: email,
+        companyName: company,
+        customSubject: subject,
+        customBody: body
+      })
+    });
+
+    const json = await res.json();
+    if (!json.success) {
+      showToast(json.error || 'Failed to generate email proposal', 'error');
+      return;
+    }
+
+    showToast('Merchant proposal & referral link logged! Launching email...', 'success');
+    closeEmailProposalModal();
+    await refreshAllData();
+
+    // Open mail client (Outlook / Apple Mail / default)
+    window.location.href = json.data.mailtoUrl;
+  } catch (err) {
+    showToast('Email error: ' + err.message, 'error');
+  }
 }
 
 // ==========================================

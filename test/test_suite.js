@@ -248,6 +248,24 @@ async function runTests() {
     assert.ok(queue.every(item => item.priorityTier === 1));
   });
 
+  // TEST 14: Email Merchant Proposal to Run Deals on Go Extra Mile
+  test('Requirement: Email merchant proposal generates listing pitch and sends referral link GOMILES', () => {
+    const emailResult = referralService.sendEmailProposal({
+      recipientName: 'Rajesh Singhania',
+      recipientEmail: 'rajesh@auroraretail.in',
+      companyName: 'Aurora Retail'
+    });
+
+    assert.strictEqual(emailResult.success, true);
+    assert.strictEqual(emailResult.referralCode, 'GOMILES');
+    assert.strictEqual(emailResult.referralUrl, 'https://www.goextramile.in/r?code=GOMILES');
+    assert.ok(emailResult.subject.includes('Go Extra Mile'));
+    assert.ok(emailResult.body.includes('https://www.goextramile.in/r?code=GOMILES'));
+    assert.ok(emailResult.body.includes('GOMILES'));
+    assert.ok(emailResult.body.toLowerCase().includes('run') || emailResult.body.toLowerCase().includes('exclusive offers'));
+    assert.ok(emailResult.mailtoUrl.startsWith('mailto:rajesh%40auroraretail.in?subject='));
+  });
+
   console.log(`\n========================================`);
   console.log(`Total tests: ${passed + failed}`);
   console.log(`Passed: ${passed}`);

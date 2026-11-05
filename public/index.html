@@ -1091,7 +1091,10 @@
             <span class="font-bold text-white text-sm" id="autoCallTargetName">Rajesh Singhania</span>
             <span class="text-xs text-amber-300 font-medium" id="autoCallTargetDesignation">Founder &bull; Aurora Retail</span>
           </div>
-          <p class="text-xs text-slate-400 font-mono mt-0.5" id="autoCallTargetPhone">+91 98201 44521</p>
+          <div class="flex items-center gap-3 text-xs text-slate-400 font-mono mt-0.5">
+            <span id="autoCallTargetPhone">+91 98201 44521</span>
+            <span id="autoCallTargetEmail" class="text-indigo-400 font-sans"></span>
+          </div>
         </div>
         <div class="text-right">
           <span class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded font-bold">
@@ -1122,28 +1125,41 @@
           <span class="text-[11px] text-slate-400">Click a response to advance conversation</span>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
           <button onclick="advanceBotStep('interested')" class="bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-200 border border-emerald-500/40 p-2.5 rounded-lg text-left transition flex items-center gap-2">
             <i class="fa-solid fa-circle-check text-emerald-400 shrink-0"></i>
             <div>
-              <div class="font-bold">"Yes, send me the onboarding link"</div>
-              <div class="text-[10px] text-slate-300">Bot asks WhatsApp consent & dispatches GOMILES link</div>
+              <div class="font-bold">"Yes, send link"</div>
+              <div class="text-[10px] text-slate-300">WhatsApp GOMILES link</div>
+            </div>
+          </button>
+
+          <button onclick="advanceBotStep('email_requested')" class="bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-500/40 p-2.5 rounded-lg text-left transition flex items-center gap-2">
+            <i class="fa-solid fa-envelope text-indigo-400 shrink-0"></i>
+            <div>
+              <div class="font-bold">"Email me the proposal"</div>
+              <div class="text-[10px] text-slate-300">Mail campaign details & link</div>
             </div>
           </button>
 
           <button onclick="advanceBotStep('cost_query')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 p-2.5 rounded-lg text-left transition flex items-center gap-2">
             <i class="fa-solid fa-circle-question text-amber-400 shrink-0"></i>
             <div>
-              <div class="font-bold">"What are the listing fees?"</div>
-              <div class="text-[10px] text-slate-300">Bot explains 0 upfront fees & complete discount control</div>
+              <div class="font-bold">"What are the fees?"</div>
+              <div class="text-[10px] text-slate-300">0 upfront listing fees</div>
             </div>
           </button>
         </div>
 
         <div class="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-800">
-          <button onclick="dispatchBotReferralWhatsApp()" id="btnAutoSendReferral" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-lg transition flex items-center gap-1.5 shadow-lg shadow-amber-500/20">
-            <i class="fa-brands fa-whatsapp text-sm"></i> Instant Send GOMILES Link to WhatsApp
-          </button>
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="dispatchBotReferralWhatsApp()" id="btnAutoSendReferral" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow-lg shadow-amber-500/20">
+              <i class="fa-brands fa-whatsapp text-sm"></i> Send to WhatsApp
+            </button>
+            <button onclick="dispatchBotReferralEmail()" id="btnAutoSendEmail" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow-lg shadow-indigo-600/20">
+              <i class="fa-solid fa-envelope"></i> Mail Campaign Proposal
+            </button>
+          </div>
 
           <button onclick="endAutoCall()" class="bg-rose-600/30 hover:bg-rose-600/50 text-rose-300 border border-rose-500/40 text-xs font-semibold px-4 py-2 rounded-lg transition">
             <i class="fa-solid fa-phone-slash"></i> End Call
@@ -1164,6 +1180,73 @@
         </details>
       </div>
 
+    </div>
+  </div>
+
+  <!-- MODAL 8: EMAIL MERCHANT PROPOSAL MODAL -->
+  <div id="modalEmailProposal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 animate-scale-in max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-envelope-open-text"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Email Proposal: Run Deals on Go Extra Mile App</h3>
+            <p class="text-xs text-slate-400">Merchant Onboarding & Referral Link Dispatch</p>
+          </div>
+        </div>
+        <button onclick="closeEmailProposalModal()" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="space-y-3">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Recipient Name</label>
+            <input type="text" id="emailPropName" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Company Name</label>
+            <input type="text" id="emailPropCompany" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Recipient Business Email *</label>
+          <input type="email" id="emailPropAddress" placeholder="e.g. founder@company.in" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Email Subject</label>
+          <input type="text" id="emailPropSubject" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200 font-medium">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Proposal Body (Includes Go Extra Mile Referral Link & Code)</label>
+          <textarea id="emailPropBody" rows="7" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-lg p-3 font-mono text-slate-200 leading-relaxed"></textarea>
+        </div>
+
+        <!-- Official Link Verification Badge -->
+        <div class="bg-indigo-950/40 border border-indigo-500/30 rounded-lg p-3 flex items-center justify-between text-xs">
+          <div class="space-y-0.5">
+            <span class="text-slate-400 text-[11px]">Official Go Extra Mile Referral Link:</span>
+            <code class="text-yellow-300 font-mono font-bold block select-all">https://www.goextramile.in/r?code=GOMILES</code>
+          </div>
+          <span class="bg-amber-400 text-slate-950 font-bold px-2 py-0.5 rounded text-[11px]">GOMILES</span>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between border-t border-slate-700 pt-3">
+        <button onclick="copyEmailProposalBody()" class="text-xs text-slate-300 hover:text-white flex items-center gap-1.5">
+          <i class="fa-regular fa-copy"></i> Copy Body & Link
+        </button>
+        <div class="flex items-center gap-2">
+          <button onclick="closeEmailProposalModal()" class="text-xs text-slate-400 hover:text-white px-3 py-2">Cancel</button>
+          <button onclick="executeSendEmailProposal()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2 rounded-lg transition flex items-center gap-2 shadow-lg shadow-indigo-600/20">
+            <i class="fa-solid fa-paper-plane"></i> Send Email Proposal
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 

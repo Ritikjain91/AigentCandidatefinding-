@@ -16,6 +16,14 @@
     "recommendedFor": ["Follow-up Requested", "Needs Review"]
   },
   {
+    "id": "tpl_email_merchant_campaign",
+    "name": "Feature & Run Offers on Go Extra Mile App (Email Proposal)",
+    "type": "email",
+    "subject": "Run {{companyName}}'s Deals, Exclusive Offers & Campaigns on Go Extra Mile App",
+    "body": "Dear {{name}},\n\nIt was a pleasure reaching out to you regarding {{companyName}}.\n\nWe would love to invite {{companyName}} to feature and run your exclusive brand deals, promotional offers, product catalogs, and special discounts on the Go Extra Mile app.\n\nWhy run your campaigns on Go Extra Mile?\n1. Reach High-Intent Shoppers: Directly showcase your exclusive offers and products to thousands of active verified consumers.\n2. Complete Campaign Freedom: You decide your featured product lines, discount percentages, voucher codes, and campaign duration.\n3. Zero Upfront Listing Cost: Frictionless partner onboarding with no upfront listing fees.\n4. Dedicated Merchant Support: Full assistance in uploading product catalogs, discount banners, and festive promotional deals.\n\nOfficial Merchant Onboarding & Campaign Registration Link:\n{{referralUrl}}\n(Official Partner Referral Code: {{referralCode}})\n\nClick the link above to complete your quick merchant registration and start running your brand deals live on the Go Extra Mile app.\n\nFeel free to reply to this email if you would like our team to assist with catalog upload.\n\nWarm regards,\nGo Extra Mile Partnerships Team\nOfficial Portal: {{referralUrl}}\nReferral Code: {{referralCode}}",
+    "recommendedFor": ["Interested", "Email Requested", "Proposal"]
+  },
+  {
     "id": "tpl_whatsapp_quick_share",
     "name": "Quick WhatsApp Share (Post-Call)",
     "type": "whatsapp",

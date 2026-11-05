@@ -404,6 +404,37 @@ router.get('/referral/logs', (req, res) => {
   }
 });
 
+// Send / Compose Merchant Campaign Email Proposal
+router.post('/referral/email-proposal', (req, res) => {
+  try {
+    const {
+      companyId,
+      decisionMakerId,
+      recipientName,
+      recipientEmail,
+      companyName,
+      consentConfirmed,
+      customSubject,
+      customBody
+    } = req.body;
+
+    const result = referralService.sendEmailProposal({
+      companyId,
+      decisionMakerId,
+      recipientName,
+      recipientEmail,
+      companyName,
+      consentConfirmed: consentConfirmed !== undefined ? consentConfirmed : true,
+      customSubject,
+      customBody
+    });
+
+    res.json({ success: true, message: 'Merchant email proposal generated & logged.', data: result });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 // ==========================================
 // CALLER PROFILE & DIALER SESSIONS
 // ==========================================
