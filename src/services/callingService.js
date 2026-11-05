@@ -368,7 +368,92 @@ class CallingService {
       createdAt: new Date().toISOString()
     };
 
+    // If real telephony (Twilio/Exotel) is configured, dispatch the live two-leg bridge
+    const telConfig = this.getTelephonyConfig();
+    if (telConfig.isConfigured) {
+      this.dispatchRealBridgeCall({
+        userPhone: caller.agentPhone,
+        customerPhone: targetPhone,
+        customerName: dm ? dm.fullName : 'Merchant'
+      }).catch(err => console.warn('Bridge dispatch background error:', err.message));
+    }
+
     return bridgeRecord;
+  }
+
+  // Real Two-Leg Cloud Bridge Dispatcher
+  async dispatchRealBridgeCall({ userPhone, customerPhone, customerName = 'Merchant' }) {
+    const config = storage.getConfig();
+    const tel = config.telephony || {};
+
+    const cleanUser = userPhone.replace(/[^0-9]/g, '');
+    const formattedUser = cleanUser.startsWith('91') && cleanUser.length === 12
+      ? `+${cleanUser}`
+      : cleanUser.length === 10
+      ? `+91${cleanUser}`
+      : `+${cleanUser}`;
+
+    const cleanTarget = customerPhone.replace(/[^0-9]/g, '');
+    const formattedTarget = cleanTarget.startsWith('91') && cleanTarget.length === 12
+      ? `+${cleanTarget}`
+      : cleanTarget.length === 10
+      ? `+91${cleanTarget}`
+      : `+${cleanTarget}`;
+
+    const twilioSid = tel.twilioAccountSid || process.env.TWILIO_ACCOUNT_SID;
+    const twilioToken = tel.twilioAuthToken || process.env.TWILIO_AUTH_TOKEN;
+    const twilioFrom = tel.twilioPhoneNumber || process.env.TWILIO_PHONE_NUMBER;
+
+    if (twilioSid && twilioToken && twilioFrom) {
+      const bridgeTwiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Aditi" language="en-IN">Connecting your call to ${customerName} on Go Extra Mile merchant desk.</Say>
+    <Dial callerId="${twilioFrom}">${formattedTarget}</Dial>
+</Response>`;
+
+      const params = new URLSearchParams({
+        To: formattedUser,
+        From: twilioFrom,
+        Twiml: bridgeTwiml
+      });
+
+      const basicAuth = Buffer.from(`${twilioSid}:${twilioToken}`).toString('base64');
+      const twilioRes = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Calls.json`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${basicAuth}`,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: params.toString()
+      });
+
+      return await twilioRes.json();
+    }
+
+    const exotelSid = tel.exotelSid || process.env.EXOTEL_SID;
+    const exotelToken = tel.exotelToken || process.env.EXOTEL_TOKEN;
+    const exotelKey = tel.exotelApiKey || process.env.EXOTEL_API_KEY;
+
+    if (exotelSid && exotelToken && exotelKey) {
+      const params = new URLSearchParams({
+        From: formattedUser,
+        To: formattedTarget,
+        CallerId: tel.exotelCallerId || tel.exotelApiKey || exotelKey,
+        CallType: 'trans'
+      });
+
+      const basicAuth = Buffer.from(`${exotelKey}:${exotelToken}`).toString('base64');
+      const exotelRes = await fetch(`https://api.exotel.com/v1/Accounts/${exotelSid}/Calls/connect.json`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${basicAuth}`,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: params.toString()
+      });
+
+      return await exotelRes.json();
+    }
   }
 
   // ==========================================
