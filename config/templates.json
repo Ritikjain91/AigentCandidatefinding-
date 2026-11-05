@@ -1,0 +1,34 @@
+[
+  {
+    "id": "tpl_post_call_interested",
+    "name": "Post-Call Merchant Onboarding Follow-Up (Interested)",
+    "type": "whatsapp",
+    "subject": "Go Extra Mile - Partner Onboarding Link & Next Steps",
+    "body": "Hi {{name}},\n\nThank you for taking the time to speak today regarding {{companyName}} partnering with Go Extra Mile! As discussed, Go Extra Mile gives your brand direct visibility to high-intent shoppers seeking exclusive deals and offers.\n\nYou can register your brand and explore listing your products, exclusive offers, and promotional discounts directly via our official partner onboarding portal here:\n{{referralUrl}}\n(Referral Code: {{referralCode}})\n\nFeel free to reply here if you'd like us to assist with uploading your product catalogs and promotional campaign details.\n\nBest regards,\nGo Extra Mile Partnerships Team",
+    "recommendedFor": ["Interested", "Follow-up Requested"]
+  },
+  {
+    "id": "tpl_email_formal_pitch",
+    "name": "Official Partnership Proposal (Email)",
+    "type": "email",
+    "subject": "Exclusive Listing Opportunity for {{companyName}} on Go Extra Mile",
+    "body": "Dear {{name}},\n\nFollowing our conversation regarding {{companyName}}, I am writing to share how partnering with Go Extra Mile can drive significant footfall and sales conversions for your brand.\n\nGo Extra Mile connects leading brands with eager consumers seeking exclusive discounts, bundled deals, and seasonal product promotions. Listing your catalog on our platform provides:\n- Zero upfront listing friction\n- Targeted customer acquisition for your key product lines\n- Complete control over your discount percentages and campaign duration\n\nTo review the merchant agreement and initiate onboarding, please register using our official partner portal link:\n{{referralUrl}}\n(Partner Referral Code: {{referralCode}})\n\nPlease let me know when convenient for a quick walkthrough, or complete your signup via the link above and our merchant team will reach out directly.\n\nWarm regards,\nPartnerships Director\nGo Extra Mile\nhttps://www.goextramile.in",
+    "recommendedFor": ["Follow-up Requested", "Needs Review"]
+  },
+  {
+    "id": "tpl_whatsapp_quick_share",
+    "name": "Quick WhatsApp Share (Post-Call)",
+    "type": "whatsapp",
+    "subject": "Go Extra Mile Partnership Link",
+    "body": "Hi {{name}}, great connecting with you today! Here is the official Go Extra Mile link to list {{companyName}}'s deals and exclusive offers on our app:\n\n{{referralUrl}}\n\nUse code {{referralCode}} for prioritized merchant onboarding. Looking forward to having your brand live with us!",
+    "recommendedFor": ["Interested", "Call Completed"]
+  },
+  {
+    "id": "tpl_exclusive_offers",
+    "name": "Exclusive Offers & Discounts Pitch",
+    "type": "whatsapp",
+    "subject": "Boost {{companyName}}'s Sales with Go Extra Mile Exclusive Deals",
+    "body": "Hello {{name}},\n\nWe would love to feature {{companyName}}'s exclusive deals and product discounts to thousands of active shoppers on the Go Extra Mile app.\n\nCheck out our merchant onboarding and register here:\n{{referralUrl}}\n(Referral Code: {{referralCode}})\n\nLooking forward to driving high-value customers to your offerings!",
+    "recommendedFor": ["Cold Outreach", "Follow-up"]
+  }
+]

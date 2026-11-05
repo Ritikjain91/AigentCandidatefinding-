@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutomaticCallingBot - Decision-Maker Outreach & Go Extra Mile</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans">
+
+  <!-- ================= TOP NOTIFICATION / REFERRAL BAR ================= -->
+  <div class="bg-gradient-to-r from-amber-600 via-orange-600 to-indigo-700 text-white px-4 py-2.5 shadow-md sticky top-0 z-40 border-b border-amber-500/30">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center space-x-3">
+        <span class="bg-white/20 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+          <i class="fa-solid fa-gift text-yellow-300"></i> Official App Link
+        </span>
+        <div class="flex items-center space-x-2 text-sm">
+          <span class="font-medium text-amber-100 hidden sm:inline">Go Extra Mile Partner Portal:</span>
+          <code id="topReferralUrl" class="bg-black/30 px-2.5 py-1 rounded text-xs font-mono font-bold text-yellow-200 select-all cursor-pointer" title="Click to copy">
+            https://www.goextramile.in/r?code=GOMILES
+          </code>
+          <span class="text-xs bg-amber-400 text-slate-950 font-bold px-2 py-0.5 rounded-full">Code: GOMILES</span>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2 text-xs">
+        <button id="topCopyBtn" onclick="copyReferralLink()" class="bg-white text-slate-900 hover:bg-amber-100 font-semibold px-3 py-1.5 rounded-md shadow transition flex items-center gap-1.5">
+          <i class="fa-regular fa-copy"></i> Copy Link
+        </button>
+        <button onclick="openShareModal()" class="bg-indigo-900/80 hover:bg-indigo-800 text-white font-semibold px-3 py-1.5 rounded-md border border-indigo-400/40 shadow transition flex items-center gap-1.5">
+          <i class="fa-solid fa-share-nodes"></i> Share Link
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MAIN HEADER ================= -->
+  <header class="bg-slate-800/80 backdrop-blur border-b border-slate-700/60 sticky top-[49px] z-30">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-lg bg-gradient-to-tr from-amber-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-amber-500/20 font-bold text-lg">
+          <i class="fa-solid fa-phone-volume"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+            AutomaticCallingBot
+            <span class="text-xs bg-slate-700 text-amber-300 font-semibold px-2 py-0.5 rounded border border-slate-600">Decision-Maker Module</span>
+          </h1>
+          <p class="text-xs text-slate-400">Targeted B2B Outreach & Go Extra Mile Merchant Onboarding</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex items-center space-x-1 sm:space-x-2">
+        <button onclick="switchTab('dashboard')" id="tabBtn-dashboard" class="nav-tab active-tab px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5">
+          <i class="fa-solid fa-chart-pie"></i> <span class="hidden sm:inline">Dashboard</span>
+        </button>
+        <button onclick="switchTab('decisionMakers')" id="tabBtn-decisionMakers" class="nav-tab px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5">
+          <i class="fa-solid fa-users-viewfinder"></i> <span class="hidden sm:inline">Decision-Makers</span>
+        </button>
+        <button onclick="switchTab('companies')" id="tabBtn-companies" class="nav-tab px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5">
+          <i class="fa-solid fa-building"></i> <span class="hidden sm:inline">Companies</span>
+        </button>
+        <button onclick="switchTab('research')" id="tabBtn-research" class="nav-tab px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5">
+          <i class="fa-solid fa-magnifying-glass-chart"></i> <span class="hidden sm:inline">Research & Discovery</span>
+        </button>
+        <button onclick="switchTab('outreach')" id="tabBtn-outreach" class="nav-tab px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5">
+          <i class="fa-solid fa-headset"></i> <span class="hidden sm:inline">Sales Calls</span>
+        </button>
+        <button onclick="switchTab('settings')" id="tabBtn-settings" class="nav-tab px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5">
+          <i class="fa-solid fa-gear"></i> <span class="hidden sm:inline">Settings</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Sales Objective Banner -->
+  <div class="bg-indigo-950/40 border-b border-indigo-900/50 px-4 py-2 text-xs text-slate-300">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-amber-400 font-semibold flex items-center gap-1"><i class="fa-solid fa-bullseye"></i> Sales Objective:</span>
+        <span class="text-slate-300">Introduce Go Extra Mile and convince relevant companies to list their products, exclusive offers, discounts and promotional deals on the platform.</span>
+      </div>
+      <div class="hidden md:flex items-center gap-2 text-slate-400">
+        <i class="fa-solid fa-shield-halved text-emerald-400"></i>
+        <span>No customer-care contacts &bull; Explicit consent required</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= CONTENT AREA ================= -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
+
+    <!-- TAB 1: DASHBOARD OVERVIEW -->
+    <section id="tab-dashboard" class="tab-content space-y-6">
+      
+      <!-- Go Extra Mile Referral Banner Card -->
+      <div class="bg-gradient-to-br from-slate-800 via-slate-800 to-indigo-950/60 p-6 rounded-2xl border border-slate-700/80 shadow-xl relative overflow-hidden">
+        <div class="absolute -right-8 -bottom-8 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative z-10">
+          <div class="space-y-2 max-w-2xl">
+            <div class="flex items-center gap-2">
+              <span class="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold px-2.5 py-1 rounded-md flex items-center gap-1.5">
+                <i class="fa-solid fa-star"></i> Official Referral Program
+              </span>
+              <span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-medium px-2 py-0.5 rounded">
+                Code Protected: GOMILES
+              </span>
+            </div>
+            <h2 class="text-2xl font-bold text-white tracking-tight">Go Extra Mile Partner Onboarding & Referral Link</h2>
+            <p class="text-sm text-slate-300 leading-relaxed">
+              Use this official referral link when pitching to business owners, CEOs, marketing leads, and sales heads. Decision-makers can register directly to list their exclusive discounts, product bundles, and festive deals.
+            </p>
+            <div class="pt-2 flex flex-wrap items-center gap-3">
+              <div class="bg-slate-900/90 border border-slate-700 rounded-lg px-3.5 py-2 flex items-center gap-2 text-sm font-mono text-yellow-300 shadow-inner select-all">
+                <i class="fa-solid fa-link text-slate-400"></i>
+                <span id="cardReferralUrl">https://www.goextramile.in/r?code=GOMILES</span>
+              </div>
+              <button onclick="copyReferralLink()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2 rounded-lg text-sm transition flex items-center gap-2 shadow-lg shadow-amber-500/20">
+                <i class="fa-regular fa-copy"></i> Copy Link
+              </button>
+              <button onclick="openShareModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-2 rounded-lg text-sm transition flex items-center gap-2 shadow-lg shadow-indigo-600/20">
+                <i class="fa-solid fa-share-nodes"></i> Share Link
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Actions & Safety Status -->
+          <div class="bg-slate-900/70 border border-slate-700/60 rounded-xl p-4 w-full lg:w-72 space-y-3">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Outreach Guardrails</h4>
+            <div class="space-y-2 text-xs">
+              <div class="flex items-center justify-between text-slate-300">
+                <span>Code Integrity:</span>
+                <span class="text-emerald-400 font-semibold"><i class="fa-solid fa-check"></i> Locked (GOMILES)</span>
+              </div>
+              <div class="flex items-center justify-between text-slate-300">
+                <span>Anti-Spam Consent:</span>
+                <span class="text-emerald-400 font-semibold"><i class="fa-solid fa-lock"></i> Mandatory Check</span>
+              </div>
+              <div class="flex items-center justify-between text-slate-300">
+                <span>Contact Filtering:</span>
+                <span class="text-emerald-400 font-semibold"><i class="fa-solid fa-filter"></i> No Support Lines</span>
+              </div>
+            </div>
+            <div class="pt-2 border-t border-slate-800">
+              <button onclick="openManualCallModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-semibold py-2 rounded border border-amber-500/30 transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-phone"></i> Log Post-Call & Share Link
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Metric KPI Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Card 1: Total Companies -->
+        <div class="bg-slate-800/80 border border-slate-700/60 rounded-xl p-4 shadow-sm flex items-center justify-between">
+          <div>
+            <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Discovered Companies</p>
+            <h3 id="statTotalCompanies" class="text-2xl font-bold text-white mt-1">0</h3>
+            <p class="text-xs text-slate-400 mt-1">Target merchant prospects</p>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-xl">
+            <i class="fa-solid fa-building-circle-check"></i>
+          </div>
+        </div>
+
+        <!-- Card 2: Decision-Makers Priority Tier 1 -->
+        <div class="bg-slate-800/80 border border-amber-500/40 rounded-xl p-4 shadow-sm flex items-center justify-between relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-16 h-16 bg-amber-500/5 rounded-full blur-xl"></div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+              <p class="text-xs font-bold text-amber-300 uppercase tracking-wider">1st Preference (Tier 1)</p>
+            </div>
+            <h3 id="statTier1Count" class="text-2xl font-bold text-amber-200 mt-1">0</h3>
+            <p class="text-xs text-slate-400 mt-1">Owner, Founder, MD, CEO</p>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-xl">
+            <i class="fa-solid fa-crown"></i>
+          </div>
+        </div>
+
+        <!-- Card 3: Tier 2 & Tier 3 Contacts -->
+        <div class="bg-slate-800/80 border border-slate-700/60 rounded-xl p-4 shadow-sm flex items-center justify-between">
+          <div>
+            <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Marketing & Sales Leads</p>
+            <h3 id="statTier2Tier3Count" class="text-2xl font-bold text-indigo-300 mt-1">0</h3>
+            <p class="text-xs text-slate-400 mt-1">2nd & 3rd Priority Tiers</p>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-xl">
+            <i class="fa-solid fa-bullhorn"></i>
+          </div>
+        </div>
+
+        <!-- Card 4: Verification Rate -->
+        <div class="bg-slate-800/80 border border-slate-700/60 rounded-xl p-4 shadow-sm flex items-center justify-between">
+          <div>
+            <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Verification Rate</p>
+            <h3 id="statVerifiedPercent" class="text-2xl font-bold text-emerald-400 mt-1">0%</h3>
+            <p id="statVerifiedSubtext" class="text-xs text-slate-400 mt-1">0 verified / 0 unverified</p>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xl">
+            <i class="fa-solid fa-certificate"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Priority Hierarchy Reference Guide -->
+      <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-sitemap text-amber-400"></i>
+            <h3 class="text-sm font-bold text-white uppercase tracking-wider">Decision-Maker Priority Hierarchy</h3>
+          </div>
+          <span class="text-xs text-slate-400">Strictly identifies executive decision-makers only</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Tier 1 -->
+          <div class="bg-slate-900/70 border border-amber-500/30 rounded-lg p-3.5 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-amber-400 flex items-center gap-1.5">
+                <i class="fa-solid fa-medal text-amber-400"></i> 1st Preference
+              </span>
+              <span class="text-[10px] bg-amber-500/20 text-amber-300 font-bold px-2 py-0.5 rounded">Highest Authority</span>
+            </div>
+            <p class="text-xs font-semibold text-slate-200">Owner &bull; Managing Director (MD) &bull; CEO &bull; Founder / Co-Founder</p>
+            <p class="text-[11px] text-slate-400">Authorized to sign merchant agreements and approve exclusive brand discounts.</p>
+          </div>
+
+          <!-- Tier 2 -->
+          <div class="bg-slate-900/70 border border-purple-500/30 rounded-lg p-3.5 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-purple-400 flex items-center gap-1.5">
+                <i class="fa-solid fa-medal text-purple-400"></i> 2nd Preference
+              </span>
+              <span class="text-[10px] bg-purple-500/20 text-purple-300 font-bold px-2 py-0.5 rounded">Campaign Head</span>
+            </div>
+            <p class="text-xs font-semibold text-slate-200">Head of Marketing &bull; Marketing Manager</p>
+            <p class="text-[11px] text-slate-400">Manages seasonal deals, customer acquisition channels, and promotional budgets.</p>
+          </div>
+
+          <!-- Tier 3 -->
+          <div class="bg-slate-900/70 border border-blue-500/30 rounded-lg p-3.5 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-blue-400 flex items-center gap-1.5">
+                <i class="fa-solid fa-medal text-blue-400"></i> 3rd Preference
+              </span>
+              <span class="text-[10px] bg-blue-500/20 text-blue-300 font-bold px-2 py-0.5 rounded">Revenue Lead</span>
+            </div>
+            <p class="text-xs font-semibold text-slate-200">Head of Sales &bull; Sales Manager</p>
+            <p class="text-[11px] text-slate-400">Drives distribution volume, product listings, and special retail bundle offers.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Decision-Makers Table Preview -->
+      <div class="bg-slate-800/80 border border-slate-700/60 rounded-xl p-5 shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-users text-indigo-400"></i> Priority Decision-Makers Roster
+            </h3>
+            <p class="text-xs text-slate-400">Sorted strictly by Priority Tier (1st &rarr; 2nd &rarr; 3rd Preference) and verification status</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="openAddDecisionMakerModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-3 py-2 rounded-lg transition flex items-center gap-1.5 shadow">
+              <i class="fa-solid fa-user-plus"></i> Add Decision-Maker
+            </button>
+            <button onclick="switchTab('decisionMakers')" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-2 rounded-lg transition flex items-center gap-1.5">
+              <span>View All</span> <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <div id="dashboardDmTableContainer" class="overflow-x-auto">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: DECISION-MAKERS DIRECTORY -->
+    <section id="tab-decisionMakers" class="tab-content hidden space-y-5">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-id-card-clip text-amber-400"></i> Discovered Decision-Makers
+          </h2>
+          <p class="text-xs text-slate-400">Every discovered contact is classified by preference rank, verified status, and professional coordinates.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="openAddDecisionMakerModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-lg transition flex items-center gap-2 shadow">
+            <i class="fa-solid fa-user-plus"></i> Add New Contact
+          </button>
+        </div>
+      </div>
+
+      <!-- Filters & Search Toolbar -->
+      <div class="bg-slate-800/80 border border-slate-700/60 p-4 rounded-xl flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-3 flex-1 min-w-[280px]">
+          <!-- Search input -->
+          <div class="relative flex-1 min-w-[220px]">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+            <input type="text" id="dmSearchInput" oninput="filterDecisionMakers()" placeholder="Search by name, company, designation, phone..." class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg pl-8 pr-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+          </div>
+
+          <!-- Tier Filter -->
+          <select id="dmTierFilter" onchange="filterDecisionMakers()" class="bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500">
+            <option value="">All Priority Tiers</option>
+            <option value="1">1st Preference: Owner, MD, CEO, Founder</option>
+            <option value="2">2nd Preference: Marketing Head & Manager</option>
+            <option value="3">3rd Preference: Sales Head & Manager</option>
+          </select>
+
+          <!-- Verification Filter -->
+          <select id="dmVerifyFilter" onchange="filterDecisionMakers()" class="bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500">
+            <option value="">All Verification States</option>
+            <option value="Verified">Verified Only</option>
+            <option value="Unverified">Unverified Only</option>
+          </select>
+        </div>
+
+        <div class="text-xs text-slate-400">
+          Showing <span id="dmFilteredCount" class="font-bold text-amber-300">0</span> contacts
+        </div>
+      </div>
+
+      <!-- Full Decision Makers Table -->
+      <div class="bg-slate-800/80 border border-slate-700/60 rounded-xl overflow-hidden shadow-sm">
+        <div id="fullDmTableContainer" class="overflow-x-auto">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: COMPANIES -->
+    <section id="tab-companies" class="tab-content hidden space-y-5">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-buildings text-indigo-400"></i> Target Merchant Companies
+          </h2>
+          <p class="text-xs text-slate-400">Companies being targeted for listing deals, offers, and discounts on Go Extra Mile.</p>
+        </div>
+        <button onclick="openAddCompanyModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-4 py-2 rounded-lg transition flex items-center gap-2 shadow">
+          <i class="fa-solid fa-plus"></i> Add Target Company
+        </button>
+      </div>
+
+      <!-- Companies Grid -->
+      <div id="companiesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Dynamically rendered -->
+      </div>
+    </section>
+
+    <!-- TAB 4: RESEARCH & DISCOVERY MODULE -->
+    <section id="tab-research" class="tab-content hidden space-y-6">
+      <div class="space-y-1">
+        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-magnifying-glass-chart text-amber-400"></i> Decision-Maker Research & Discovery Engine
+        </h2>
+        <p class="text-xs text-slate-400">Automated research assistant targeting official websites, LinkedIn, business registries, and directories.</p>
+      </div>
+
+      <!-- Research Input Panel -->
+      <div class="bg-slate-800/80 border border-slate-700/60 rounded-xl p-5 shadow-sm space-y-4">
+        <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-crosshairs text-amber-400"></i> New Company Research Target
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Company Name *</label>
+            <input type="text" id="resCompanyName" placeholder="e.g. Royal Heritage Lifestyle" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Website / Domain</label>
+            <input type="text" id="resDomain" placeholder="e.g. royalheritage.in" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Industry / Category</label>
+            <input type="text" id="resIndustry" placeholder="e.g. Fashion & Retail" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">City / Region</label>
+            <input type="text" id="resCity" placeholder="e.g. Mumbai" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+          <div class="flex items-center gap-2 text-xs text-slate-400">
+            <i class="fa-solid fa-circle-info text-amber-400"></i>
+            <span>Searches for Owner &bull; MD &bull; CEO &bull; Founder &bull; Marketing &bull; Sales</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="generateSearchQueries()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold px-4 py-2 rounded-lg transition flex items-center gap-2">
+              <i class="fa-brands fa-google"></i> Show Targeted Search Queries
+            </button>
+            <button onclick="runAutomatedDiscovery()" id="btnRunDiscovery" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-lg transition flex items-center gap-2 shadow-lg shadow-amber-500/20">
+              <i class="fa-solid fa-robot"></i> Run Automated Discovery
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Generated Search Queries Display (Collapsible) -->
+      <div id="queriesContainer" class="hidden bg-slate-800/80 border border-slate-700/60 rounded-xl p-5 space-y-4">
+        <div class="flex items-center justify-between">
+          <h4 class="text-sm font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-code text-indigo-400"></i> Targeted Multi-Source Search Strings
+          </h4>
+          <span class="text-xs text-slate-400">Click any query to copy or open directly in search</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="queriesGrid">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Discovery Results Container -->
+      <div id="discoveryResultsContainer" class="hidden bg-slate-800/80 border border-slate-700/60 rounded-xl p-5 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i> Discovered Decision-Maker Candidates
+            </h3>
+            <p class="text-xs text-slate-400">Review candidates categorized by priority. Verified entries include source attribution.</p>
+          </div>
+          <button onclick="saveAllDiscoveredCandidates()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2 rounded-lg transition flex items-center gap-2 shadow">
+            <i class="fa-solid fa-floppy-disk"></i> Save All to Database
+          </button>
+        </div>
+
+        <div id="discoveryCandidatesList" class="space-y-3">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: SALES CALLS & MANUAL REFERRAL SHARING -->
+    <section id="tab-outreach" class="tab-content hidden space-y-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-headset text-indigo-400"></i> Sales Calls & Post-Call Follow-Up
+          </h2>
+          <p class="text-xs text-slate-400">After pitching Go Extra Mile over a sales call, instantly share the official onboarding link with explicit consent.</p>
+        </div>
+        <button onclick="openManualCallModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-lg transition flex items-center gap-2 shadow">
+          <i class="fa-solid fa-phone"></i> Log Sales Call & Share Link
+        </button>
+      </div>
+
+      <!-- Call Logs & Referral Shares -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Left: Sales Call History -->
+        <div class="bg-slate-800/80 border border-slate-700/60 rounded-xl p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i> Recent Sales Calls
+            </h3>
+            <span class="text-xs text-slate-400" id="callsCount">0 calls logged</span>
+          </div>
+          <div id="callsListContainer" class="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Right: Referral Link Share Audit Log -->
+        <div class="bg-slate-800/80 border border-slate-700/60 rounded-xl p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-share-nodes text-emerald-400"></i> Link Sharing Audit Trail
+            </h3>
+            <span class="text-xs bg-emerald-500/20 text-emerald-300 font-bold px-2 py-0.5 rounded border border-emerald-500/30">
+              Consent Verified
+            </span>
+          </div>
+          <div id="shareLogsContainer" class="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 6: SETTINGS -->
+    <section id="tab-settings" class="tab-content hidden space-y-6">
+      <div class="space-y-1">
+        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-gear text-slate-400"></i> Application Settings & Referral Configuration
+        </h2>
+        <p class="text-xs text-slate-400">Manage the official Go Extra Mile referral link, protected codes, and compliance rules.</p>
+      </div>
+
+      <div class="bg-slate-800/80 border border-slate-700/60 rounded-xl p-6 shadow-sm space-y-6 max-w-3xl">
+        <div class="border-b border-slate-700 pb-4">
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-link text-amber-400"></i> Official Go Extra Mile Referral Settings
+          </h3>
+          <p class="text-xs text-slate-400 mt-1">Configured for automated message composition and dashboard integration.</p>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Official Referral Link</label>
+            <div class="flex items-center gap-2">
+              <input type="text" id="settingsReferralUrl" value="https://www.goextramile.in/r?code=GOMILES" class="flex-1 bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 font-mono text-yellow-300 focus:outline-none focus:border-indigo-500">
+              <button onclick="copyReferralLink()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-2 rounded-lg transition">
+                <i class="fa-regular fa-copy"></i>
+              </button>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">Requirement: Official link must include the partner code parameter <code class="text-amber-300 font-bold">code=GOMILES</code>.</p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Referral Code (Immutable)</label>
+            <input type="text" id="settingsReferralCode" value="GOMILES" readonly class="w-full bg-slate-950 border border-slate-800 text-xs rounded-lg px-3 py-2 font-mono font-bold text-emerald-400 cursor-not-allowed select-all">
+            <p class="text-[11px] text-emerald-400/90 mt-1 flex items-center gap-1">
+              <i class="fa-solid fa-lock"></i> Protected: The referral code GOMILES cannot be altered or removed.
+            </p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Platform Sales Objective Pitch</label>
+            <textarea id="settingsPitch" rows="2" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-indigo-500">Introduce Go Extra Mile and convince relevant companies to list their products, exclusive offers, discounts and promotional deals on the platform.</textarea>
+          </div>
+        </div>
+
+        <div class="border-t border-slate-700/80 pt-4 space-y-3">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+            <i class="fa-solid fa-shield text-amber-400"></i> Compliance & Guardrail Policy
+          </h4>
+          <div class="bg-slate-900/70 border border-amber-500/20 rounded-lg p-3.5 space-y-2 text-xs text-slate-300">
+            <p class="flex items-start gap-2">
+              <i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>
+              <span><strong>Explicit Consent Mandate:</strong> Never send promotional messages automatically without appropriate consent and authorization from the recipient.</span>
+            </p>
+            <p class="flex items-start gap-2">
+              <i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>
+              <span><strong>Decision-Maker Purity:</strong> Never substitute customer-care, toll-free, or support lines for decision-maker contacts.</span>
+            </p>
+            <p class="flex items-start gap-2">
+              <i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>
+              <span><strong>Data Authenticity:</strong> Never invent names, designations or phone numbers. All discovered records clearly distinguish verified from unverified info.</span>
+            </p>
+          </div>
+        </div>
+
+        <div class="pt-2 flex justify-end">
+          <button onclick="saveSettings()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-5 py-2.5 rounded-lg transition shadow">
+            <i class="fa-solid fa-floppy-disk"></i> Save Settings
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- MODAL 1: SHARE REFERRAL LINK MODAL -->
+  <div id="modalShare" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5 animate-scale-in">
+      <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
+            <i class="fa-solid fa-share-nodes"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Share Go Extra Mile Referral Link</h3>
+            <p class="text-xs text-slate-400">Official Merchant Onboarding Portal</p>
+          </div>
+        </div>
+        <button onclick="closeShareModal()" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <!-- Recipient Context -->
+      <div class="space-y-3">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Decision-Maker Name</label>
+            <input type="text" id="shareProspectName" placeholder="e.g. Rajesh Singhania" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Company Name</label>
+            <input type="text" id="shareCompanyName" placeholder="e.g. Aurora Retail" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">WhatsApp / Phone Number</label>
+            <input type="text" id="sharePhone" placeholder="e.g. +91 98201 44521" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Business Email (Optional)</label>
+            <input type="email" id="shareEmail" placeholder="e.g. ceo@company.com" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Select Pitch Template</label>
+          <select id="shareTemplateSelect" onchange="updateSharePreview()" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200">
+            <!-- Populated via API -->
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Message Preview (Includes Referral Link)</label>
+          <textarea id="shareMessagePreview" rows="4" class="w-full bg-slate-950 border border-slate-800 text-xs rounded-lg p-2.5 font-mono text-slate-300 leading-relaxed"></textarea>
+        </div>
+
+        <!-- Compliance Consent Checkbox (MANDATORY REQUIREMENT 10) -->
+        <div class="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+          <label class="flex items-start gap-2.5 cursor-pointer">
+            <input type="checkbox" id="shareConsentCheckbox" class="mt-0.5 rounded text-amber-500 focus:ring-0">
+            <span class="text-xs text-amber-200 leading-tight">
+              <strong>Mandatory Consent Confirmation:</strong> I confirm that the recipient has given appropriate verbal or written authorization to receive this follow-up message with the Go Extra Mile referral link.
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between border-t border-slate-700 pt-3">
+        <button onclick="copySharePreviewText()" class="text-xs text-slate-300 hover:text-white flex items-center gap-1.5">
+          <i class="fa-regular fa-copy"></i> Copy Message Text
+        </button>
+        <div class="flex items-center gap-2">
+          <button onclick="executeShareAction('email')" class="bg-slate-700 hover:bg-slate-600 text-white font-semibold text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5">
+            <i class="fa-solid fa-envelope"></i> Share via Email
+          </button>
+          <button onclick="executeShareAction('whatsapp')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2 rounded-lg transition flex items-center gap-1.5 shadow-lg shadow-emerald-600/20">
+            <i class="fa-brands fa-whatsapp text-sm"></i> Share via WhatsApp
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: ADD / EDIT DECISION MAKER -->
+  <div id="modalAddDm" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-scale-in max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2" id="modalDmTitle">
+          <i class="fa-solid fa-user-plus text-amber-400"></i> Add Identified Decision-Maker
+        </h3>
+        <button onclick="closeAddDecisionMakerModal()" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Company Name *</label>
+          <input type="text" id="dmFormCompany" placeholder="e.g. NexusTech Electronics" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Full Name *</label>
+            <input type="text" id="dmFormName" placeholder="e.g. Rajesh Singhania" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Designation * (Classifies Priority)</label>
+            <input type="text" id="dmFormDesignation" list="designationSuggestions" placeholder="e.g. Founder & MD, CEO, Head of Marketing..." class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200">
+            <datalist id="designationSuggestions">
+              <option value="Owner">
+              <option value="Managing Director (MD)">
+              <option value="Chief Executive Officer (CEO)">
+              <option value="Founder / Co-Founder">
+              <option value="Head of Marketing">
+              <option value="Marketing Manager">
+              <option value="Head of Sales">
+              <option value="Sales Manager">
+            </datalist>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Professional Business Phone Number *</label>
+          <input type="text" id="dmFormPhone" placeholder="e.g. +91 98201 44521" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200">
+          <p class="text-[11px] text-amber-300/80 mt-1 flex items-center gap-1">
+            <i class="fa-solid fa-triangle-exclamation"></i> Never substitute customer-care / 1800 numbers for decision-makers.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Official Business Email</label>
+            <input type="email" id="dmFormEmail" placeholder="e.g. rajesh@company.com" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">LinkedIn Profile URL</label>
+            <input type="url" id="dmFormLinkedIn" placeholder="https://linkedin.com/in/..." class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Source URL * (Where found)</label>
+          <input type="url" id="dmFormSourceUrl" placeholder="e.g. https://company.com/about or LinkedIn URL" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Verification Status *</label>
+            <select id="dmFormVerificationStatus" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200">
+              <option value="Verified">Verified Contact</option>
+              <option value="Unverified">Unverified Contact</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Verification Method / Notes</label>
+            <input type="text" id="dmFormVerificationMethod" placeholder="e.g. Leadership page & MCA filing" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200">
+          </div>
+        </div>
+
+        <!-- Guardrail Alert Area -->
+        <div id="dmFormAlert" class="hidden text-xs p-3 rounded-lg bg-rose-500/20 border border-rose-500/40 text-rose-300"></div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 border-t border-slate-700 pt-3">
+        <button onclick="closeAddDecisionMakerModal()" class="text-xs text-slate-300 hover:text-white px-3 py-2">Cancel</button>
+        <button onclick="saveDecisionMakerForm()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-lg transition shadow">Save Contact</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: LOG SALES CALL & POST-CALL SHARE -->
+  <div id="modalCall" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-scale-in">
+      <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-phone text-amber-400"></i> Log Sales Call & Share Follow-up
+        </h3>
+        <button onclick="closeCallModal()" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Select Contact / Decision-Maker</label>
+          <select id="callSelectDm" onchange="onCallDmChanged()" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Call Outcome</label>
+          <select id="callOutcome" onchange="onCallOutcomeChanged()" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200">
+            <option value="Interested">Interested in Go Extra Mile Listing</option>
+            <option value="Follow-up Requested">Follow-up Requested with Details</option>
+            <option value="Call Completed">Call Completed</option>
+            <option value="Not Interested">Not Interested Currently</option>
+            <option value="No Answer">No Answer / Left Voicemail</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Call Notes / Discussion Summary</label>
+          <textarea id="callNotes" rows="3" placeholder="Pitched Go Extra Mile listing. Decision-maker interested in featuring Diwali exclusive discounts..." class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg p-2.5 text-slate-200"></textarea>
+        </div>
+
+        <!-- Post-call referral share block -->
+        <div id="postCallShareSection" class="bg-indigo-950/40 border border-indigo-500/30 rounded-lg p-3.5 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+              <i class="fa-solid fa-paper-plane"></i> Share Referral Link Now
+            </span>
+            <span class="text-[10px] bg-amber-400/20 text-yellow-200 font-bold px-2 py-0.5 rounded">GOMILES</span>
+          </div>
+          <p class="text-xs text-slate-300">
+            Instantly dispatch the merchant onboarding link <code class="text-yellow-300">https://www.goextramile.in/r?code=GOMILES</code> to this decision-maker.
+          </p>
+          <label class="flex items-start gap-2 cursor-pointer pt-1">
+            <input type="checkbox" id="callConsentCheck" checked class="mt-0.5 rounded text-amber-500">
+            <span class="text-xs text-slate-200">Decision-maker gave verbal authorization during call to receive the onboarding link.</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 border-t border-slate-700 pt-3">
+        <button onclick="closeCallModal()" class="text-xs text-slate-300 hover:text-white px-3 py-2">Cancel</button>
+        <button onclick="saveCallRecord(false)" class="bg-slate-700 hover:bg-slate-600 text-white font-semibold text-xs px-3.5 py-2 rounded-lg transition">Save Call Only</button>
+        <button onclick="saveCallRecord(true)" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-lg transition flex items-center gap-1.5 shadow">
+          <i class="fa-solid fa-share"></i> Save & Share WhatsApp
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 4: PROSPECT PROFILE DRAWER / MODAL -->
+  <div id="modalProspectProfile" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 animate-scale-in max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+        <div>
+          <h3 class="text-lg font-bold text-white flex items-center gap-2" id="profileCompanyTitle">
+            Company Name
+          </h3>
+          <p class="text-xs text-slate-400" id="profileCompanyDomain">domain.com</p>
+        </div>
+        <button onclick="closeProspectProfile()" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <!-- Referral Link Quick-Share Banner in Profile (Requirement 8) -->
+      <div class="bg-gradient-to-r from-amber-500/20 via-slate-800 to-indigo-900/40 border border-amber-500/40 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-amber-300 flex items-center gap-1"><i class="fa-solid fa-gift"></i> Go Extra Mile Referral Link:</span>
+            <span class="text-[10px] bg-black/40 text-yellow-300 font-mono px-2 py-0.5 rounded font-bold">GOMILES</span>
+          </div>
+          <code class="text-xs font-mono text-slate-300 select-all block">https://www.goextramile.in/r?code=GOMILES</code>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="copyReferralLink()" class="bg-slate-700 hover:bg-slate-600 text-white text-xs px-3 py-1.5 rounded-lg transition">
+            <i class="fa-regular fa-copy"></i> Copy
+          </button>
+          <button onclick="shareForCompanyProfile()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-3.5 py-1.5 rounded-lg transition flex items-center gap-1 shadow">
+            <i class="fa-solid fa-paper-plane"></i> Share
+          </button>
+        </div>
+      </div>
+
+      <!-- Decision Makers List for Company -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300">Identified Decision-Makers (Priority Hierarchy)</h4>
+          <button onclick="addDmForActiveCompany()" class="text-xs text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1">
+            <i class="fa-solid fa-plus"></i> Add Contact
+          </button>
+        </div>
+        <div id="profileDmsList" class="space-y-2">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <div class="border-t border-slate-700 pt-3 flex justify-end">
+        <button onclick="closeProspectProfile()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-4 py-2 rounded-lg transition">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 5: ADD COMPANY -->
+  <div id="modalAddCompany" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-scale-in">
+      <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-building text-indigo-400"></i> Add Target Company
+        </h3>
+        <button onclick="closeAddCompanyModal()" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Company Name *</label>
+          <input type="text" id="compName" placeholder="e.g. Apex Lifestyle Innovations" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Domain / Website</label>
+          <input type="text" id="compDomain" placeholder="e.g. apexlifestyle.in" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Industry</label>
+          <input type="text" id="compIndustry" placeholder="e.g. Fashion, Electronics, Dining..." class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">City / Region</label>
+          <input type="text" id="compCity" placeholder="e.g. Mumbai, Bengaluru, Delhi NCR" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg px-3 py-2 text-slate-200">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Outreach Notes</label>
+          <textarea id="compNotes" rows="2" placeholder="Key brand highlights or discount categories to pitch..." class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg p-2 text-slate-200"></textarea>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 border-t border-slate-700 pt-3">
+        <button onclick="closeAddCompanyModal()" class="text-xs text-slate-300 hover:text-white px-3 py-2">Cancel</button>
+        <button onclick="saveCompanyForm()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2 rounded-lg transition shadow">Save Company</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- APPLICATION SCRIPT -->
+  <script src="app.js"></script>
+</body>
+</html>

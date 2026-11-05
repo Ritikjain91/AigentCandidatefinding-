@@ -1,0 +1,25 @@
+{
+  "name": "automaticcallingbot",
+  "version": "1.0.0",
+  "description": "Decision-Maker Identification Module & Go Extra Mile Referral Integration for Automaticcallingbot",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js",
+    "test": "node test/test_suite.js"
+  },
+  "keywords": [
+    "b2b",
+    "decision-makers",
+    "calling-bot",
+    "go-extra-mile",
+    "merchant-acquisition"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.9",
+    "express": "^5.3.0"
+  }
+}

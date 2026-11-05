@@ -1,0 +1,76 @@
+{
+  "referral": {
+    "officialUrl": "https://www.goextramile.in/r?code=GOMILES",
+    "referralCode": "GOMILES",
+    "appName": "Go Extra Mile",
+    "portalName": "Go Extra Mile Merchant & Partner Portal",
+    "salesPitch": "Join Go Extra Mile as a featured partner to list exclusive brand offers, special discounts, promotional deals, and reach thousands of verified consumers."
+  },
+  "decisionMakerTiers": [
+    {
+      "tier": 1,
+      "name": "First Preference (Executive & Ownership)",
+      "designations": [
+        "Owner",
+        "Managing Director",
+        "MD",
+        "Chief Executive Officer",
+        "CEO",
+        "Founder",
+        "Co-Founder"
+      ],
+      "badgeColor": "gold",
+      "priorityRankBase": 100
+    },
+    {
+      "tier": 2,
+      "name": "Second Preference (Marketing Leadership)",
+      "designations": [
+        "Head of Marketing",
+        "Marketing Head",
+        "Marketing Manager",
+        "Chief Marketing Officer",
+        "CMO"
+      ],
+      "badgeColor": "purple",
+      "priorityRankBase": 200
+    },
+    {
+      "tier": 3,
+      "name": "Third Preference (Sales Leadership)",
+      "designations": [
+        "Head of Sales",
+        "Sales Head",
+        "Sales Manager",
+        "VP of Sales",
+        "Chief Commercial Officer"
+      ],
+      "badgeColor": "blue",
+      "priorityRankBase": 300
+    }
+  ],
+  "customerCarePatterns": {
+    "phonePrefixes": [
+      "1800",
+      "1860",
+      "0800",
+      "+911800",
+      "+911860"
+    ],
+    "emailKeywords": [
+      "support@",
+      "care@",
+      "customercare@",
+      "info@",
+      "help@",
+      "contact@",
+      "helpdesk@",
+      "service@",
+      "hello@"
+    ]
+  },
+  "compliance": {
+    "strictConsentRequired": true,
+    "consentDisclaimer": "In compliance with telecom and data regulations, promotional messages and referral links must only be sent with explicit prospect consent and authorization. Automated spamming is strictly prohibited."
+  }
+}
