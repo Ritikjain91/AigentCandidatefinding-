@@ -149,8 +149,11 @@
                 <span class="text-emerald-400 font-semibold"><i class="fa-solid fa-filter"></i> No Support Lines</span>
               </div>
             </div>
-            <div class="pt-2 border-t border-slate-800">
-              <button onclick="openManualCallModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-semibold py-2 rounded border border-amber-500/30 transition flex items-center justify-center gap-1.5">
+            <div class="pt-2 border-t border-slate-800 space-y-2">
+              <button onclick="startAutoCallQueueCampaign(1)" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold py-2 rounded shadow transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-robot"></i> Auto-Dial Priority Tier 1 Leads
+              </button>
+              <button onclick="openManualCallModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-semibold py-1.5 rounded border border-amber-500/30 transition flex items-center justify-center gap-1.5">
                 <i class="fa-solid fa-phone"></i> Log Post-Call & Share Link
               </button>
             </div>
@@ -1049,6 +1052,116 @@
             </button>
           </div>
         </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL 7: FULLY AUTOMATED AI CALLING BOT -->
+  <div id="modalAutoCallBot" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 animate-scale-in max-h-[92vh] overflow-y-auto">
+      
+      <!-- Bot Header -->
+      <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+        <div class="flex items-center gap-3">
+          <div class="relative w-11 h-11 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center text-xl shadow-lg shadow-purple-500/30">
+            <i class="fa-solid fa-robot animate-bounce"></i>
+            <span class="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-400 border-2 border-slate-800 rounded-full"></span>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              Autonomous AI Voice Calling Bot
+              <span class="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/40 px-2 py-0.5 rounded-full font-bold">ACTIVE BOT</span>
+            </h3>
+            <p class="text-xs text-slate-400">Caller Line: <strong class="text-emerald-300 font-mono">+91 8518900153</strong> &bull; Calling Decision-Maker</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="toggleVoiceSpeech()" id="btnVoiceToggle" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5">
+            <i class="fa-solid fa-volume-high text-amber-400" id="voiceToggleIcon"></i> <span id="voiceToggleLabel">Voice ON</span>
+          </button>
+          <button onclick="closeAutoCallModal()" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      </div>
+
+      <!-- Prospect Context Pill -->
+      <div class="bg-slate-900/90 border border-slate-700 rounded-xl p-3.5 flex items-center justify-between">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-white text-sm" id="autoCallTargetName">Rajesh Singhania</span>
+            <span class="text-xs text-amber-300 font-medium" id="autoCallTargetDesignation">Founder &bull; Aurora Retail</span>
+          </div>
+          <p class="text-xs text-slate-400 font-mono mt-0.5" id="autoCallTargetPhone">+91 98201 44521</p>
+        </div>
+        <div class="text-right">
+          <span class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded font-bold">
+            <i class="fa-solid fa-bullseye"></i> Merchant Listing Pitch
+          </span>
+          <div class="text-[11px] text-yellow-300 font-mono mt-1">Code: GOMILES</div>
+        </div>
+      </div>
+
+      <!-- Live Voice Bot Interactive Transcript Area -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between text-xs text-slate-300">
+          <span class="font-bold uppercase tracking-wider flex items-center gap-1.5 text-indigo-300">
+            <i class="fa-solid fa-waveform-lines text-purple-400"></i> Live Bot Conversation Transcript
+          </span>
+          <span id="botCallDuration" class="font-mono text-emerald-400 font-bold">00:00</span>
+        </div>
+
+        <div id="botTranscriptContainer" class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3 max-h-64 overflow-y-auto">
+          <!-- Populated in real-time as the bot speaks -->
+        </div>
+      </div>
+
+      <!-- Interactive Prospect Response Simulator & Actions -->
+      <div class="bg-slate-900/70 border border-slate-700/60 rounded-xl p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Simulate Prospect Interaction</span>
+          <span class="text-[11px] text-slate-400">Click a response to advance conversation</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          <button onclick="advanceBotStep('interested')" class="bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-200 border border-emerald-500/40 p-2.5 rounded-lg text-left transition flex items-center gap-2">
+            <i class="fa-solid fa-circle-check text-emerald-400 shrink-0"></i>
+            <div>
+              <div class="font-bold">"Yes, send me the onboarding link"</div>
+              <div class="text-[10px] text-slate-300">Bot asks WhatsApp consent & dispatches GOMILES link</div>
+            </div>
+          </button>
+
+          <button onclick="advanceBotStep('cost_query')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 p-2.5 rounded-lg text-left transition flex items-center gap-2">
+            <i class="fa-solid fa-circle-question text-amber-400 shrink-0"></i>
+            <div>
+              <div class="font-bold">"What are the listing fees?"</div>
+              <div class="text-[10px] text-slate-300">Bot explains 0 upfront fees & complete discount control</div>
+            </div>
+          </button>
+        </div>
+
+        <div class="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-800">
+          <button onclick="dispatchBotReferralWhatsApp()" id="btnAutoSendReferral" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-lg transition flex items-center gap-1.5 shadow-lg shadow-amber-500/20">
+            <i class="fa-brands fa-whatsapp text-sm"></i> Instant Send GOMILES Link to WhatsApp
+          </button>
+
+          <button onclick="endAutoCall()" class="bg-rose-600/30 hover:bg-rose-600/50 text-rose-300 border border-rose-500/40 text-xs font-semibold px-4 py-2 rounded-lg transition">
+            <i class="fa-solid fa-phone-slash"></i> End Call
+          </button>
+        </div>
+      </div>
+
+      <!-- Telephony Engine & Code Integrations Drawer (Twilio / Exotel / Vapi) -->
+      <div class="border-t border-slate-700 pt-3 text-xs">
+        <details class="cursor-pointer">
+          <summary class="font-bold text-slate-400 hover:text-white flex items-center gap-2 select-none">
+            <i class="fa-solid fa-code text-indigo-400"></i> View Telephony Integration Payloads (Twilio TwiML / Vapi AI Voice)
+          </summary>
+          <div class="mt-3 bg-slate-950 p-3 rounded-lg border border-slate-800 font-mono text-[11px] text-slate-300 space-y-2 overflow-x-auto">
+            <div class="text-amber-300 font-bold">Twilio Voice TwiML Output:</div>
+            <pre id="codeTwimlDisplay" class="text-slate-400 select-all whitespace-pre-wrap"></pre>
+          </div>
+        </details>
       </div>
 
     </div>

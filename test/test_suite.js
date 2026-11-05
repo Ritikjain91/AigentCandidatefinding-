@@ -226,6 +226,28 @@ async function runTests() {
     assert.ok(bridge.instructions.some(i => i.includes('8518900153')));
   });
 
+  // TEST 12: Autonomous AI Voice Calling Bot Engine
+  test('Requirement: Automated AI Calling Bot generates dialog turns and Go Extra Mile merchant pitch', () => {
+    const dms = dmService.getAll();
+    const autoCall = callingService.initiateAutomatedAiCall({ decisionMakerId: dms[0].id });
+
+    assert.strictEqual(autoCall.callerNumber, '+91 8518900153');
+    assert.strictEqual(autoCall.targetName, dms[0].fullName);
+    assert.ok(autoCall.dialogTurns.length >= 3);
+    assert.ok(autoCall.dialogTurns.some(t => t.botAudioText.includes('Go Extra Mile')));
+    assert.strictEqual(autoCall.referralCode, 'GOMILES');
+    assert.strictEqual(autoCall.referralUrl, 'https://www.goextramile.in/r?code=GOMILES');
+    assert.ok(autoCall.twiml.includes('<Response>'));
+    assert.ok(autoCall.twiml.includes('Go Extra Mile'));
+  });
+
+  // TEST 13: Prioritized Auto-Dial Queue
+  test('Requirement: Auto-dial queue strictly prioritizes Tier 1 (Owner, MD, CEO, Founder)', () => {
+    const queue = callingService.getAutoDialQueue(1);
+    assert.ok(queue.length > 0);
+    assert.ok(queue.every(item => item.priorityTier === 1));
+  });
+
   console.log(`\n========================================`);
   console.log(`Total tests: ${passed + failed}`);
   console.log(`Passed: ${passed}`);

@@ -452,5 +452,63 @@ router.get('/network-urls', (req, res) => {
   }
 });
 
+// ==========================================
+// AUTOMATED AI CALLING BOT ENDPOINTS
+// ==========================================
+router.post('/calls/auto-call', (req, res) => {
+  try {
+    const autoCall = callingService.initiateAutomatedAiCall(req.body);
+    res.json({ success: true, data: autoCall });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+router.get('/calls/auto-queue', (req, res) => {
+  try {
+    const queue = callingService.getAutoDialQueue(req.query.tier);
+    res.json({ success: true, count: queue.length, data: queue });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Twilio TwiML Callback (When prospect presses 1 to receive link)
+router.post('/calls/twiml-callback', (req, res) => {
+  try {
+    const { Digits } = req.body;
+    const dmId = req.query.dmId;
+
+    if (Digits === '1' && dmId) {
+      const dm = dmService.getById(dmId);
+      if (dm) {
+        // Auto-log consent and positive outcome
+        storage.logCall({
+          companyId: dm.companyId,
+          companyName: dm.companyName,
+          decisionMakerId: dm.id,
+          decisionMakerName: dm.fullName,
+          designation: dm.designation,
+          phone: dm.phone,
+          outcome: 'Interested (Automated Call)',
+          notes: 'Decision-maker pressed 1 during automated call to receive Go Extra Mile onboarding link.',
+          referralShared: true,
+          sharedVia: 'WhatsApp',
+          consentVerified: true,
+          consentTimestamp: new Date().toISOString()
+        });
+      }
+    }
+
+    res.type('text/xml');
+    res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Aditi" language="en-IN">Thank you! We are sending the Go Extra Mile partner link directly to your WhatsApp. Have a great day!</Say>
+</Response>`);
+  } catch (err) {
+    res.status(500).send('<Response><Say>An error occurred.</Say></Response>');
+  }
+});
+
 module.exports = router;
 

@@ -381,8 +381,11 @@ function renderDecisionMakerRow(dm) {
       </td>
       <td class="py-3 px-4 text-right">
         <div class="flex items-center justify-end gap-1.5">
-          <button onclick="startCallFromMyNumber('${dm.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2.5 py-1 rounded text-xs transition flex items-center gap-1 shadow-sm" title="Call from your number +91 8518900153">
-            <i class="fa-solid fa-phone"></i> Call from 8518900153
+          <button onclick="startAutomatedCallBot('${dm.id}')" class="bg-purple-600 hover:bg-purple-500 text-white font-bold px-2 py-1 rounded text-xs transition flex items-center gap-1 shadow-sm" title="Launch Autonomous AI Voice Calling Bot">
+            <i class="fa-solid fa-robot"></i> Auto-Call
+          </button>
+          <button onclick="startCallFromMyNumber('${dm.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2 py-1 rounded text-xs transition flex items-center gap-1 shadow-sm" title="Call from your number +91 8518900153">
+            <i class="fa-solid fa-phone"></i> Call (8518900153)
           </button>
           <button onclick="openShareModal('${dm.id}')" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 px-2 py-1 rounded text-xs transition" title="Share Go Extra Mile Link">
             <i class="fa-solid fa-share-nodes"></i> Share Link
@@ -736,11 +739,14 @@ async function openProspectProfile(companyId) {
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <button onclick="openShareModal('${dm.id}')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1 shadow">
-              <i class="fa-solid fa-paper-plane"></i> Share Link
+            <button onclick="startAutomatedCallBot('${dm.id}')" class="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1 shadow">
+              <i class="fa-solid fa-robot"></i> Auto-Call
             </button>
-            <button onclick="startCallFromMyNumber('${dm.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-1.5 rounded-lg transition flex items-center gap-1 shadow">
+            <button onclick="startCallFromMyNumber('${dm.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1 shadow">
               <i class="fa-solid fa-phone"></i> Call from 8518900153
+            </button>
+            <button onclick="openShareModal('${dm.id}')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1 shadow">
+              <i class="fa-solid fa-paper-plane"></i> Share
             </button>
           </div>
         </div>
@@ -900,6 +906,9 @@ function renderDiscoveryResults(data) {
           <p class="text-[11px] text-slate-400 italic">${c.verificationMethod}</p>
         </div>
         <div class="flex items-center gap-2">
+          <button onclick="startAutomatedCallBotCustom('${c.fullName.replace(/'/g, "\\'")}', '${c.phone}', '${c.companyName.replace(/'/g, "\\'")}', '${c.designation.replace(/'/g, "\\'")}')" class="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-3 py-2 rounded-lg transition flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-robot"></i> Auto-Call (AI)
+          </button>
           <button onclick="callDiscoveredPerson('${c.fullName.replace(/'/g, "\\'")}', '${c.phone}', '${c.companyName.replace(/'/g, "\\'")}', '${c.designation.replace(/'/g, "\\'")}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow">
             <i class="fa-solid fa-phone"></i> Call from 8518900153
           </button>
@@ -1285,6 +1294,264 @@ async function finishActiveCall(andShareReferral = false) {
   } catch (err) {
     showToast('Failed to complete call: ' + err.message, 'error');
   }
+}
+
+// ==========================================
+// AUTONOMOUS AI CALLING BOT ENGINE
+// ==========================================
+let activeAutoCallData = null;
+let autoCallTimerInterval = null;
+let autoCallSeconds = 0;
+let voiceSpeechEnabled = true;
+
+function toggleVoiceSpeech() {
+  voiceSpeechEnabled = !voiceSpeechEnabled;
+  const icon = document.getElementById('voiceToggleIcon');
+  const label = document.getElementById('voiceToggleLabel');
+  if (voiceSpeechEnabled) {
+    if (icon) icon.className = 'fa-solid fa-volume-high text-amber-400';
+    if (label) label.innerText = 'Voice ON';
+    showToast('Voice Audio Enabled', 'info');
+  } else {
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    if (icon) icon.className = 'fa-solid fa-volume-xmark text-slate-400';
+    if (label) label.innerText = 'Voice MUTED';
+    showToast('Voice Audio Muted', 'info');
+  }
+}
+
+function speakBotText(text) {
+  if (!voiceSpeechEnabled || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = 1.0;
+  utterance.pitch = 1.0;
+
+  const voices = window.speechSynthesis.getVoices();
+  const inVoice = voices.find(v => v.lang.includes('en-IN') || v.name.includes('India')) ||
+                  voices.find(v => v.lang.startsWith('en')) ||
+                  voices[0];
+  if (inVoice) utterance.voice = inVoice;
+
+  window.speechSynthesis.speak(utterance);
+}
+
+function addTranscriptBubble(sender, text, isSpecial = false) {
+  const container = document.getElementById('botTranscriptContainer');
+  if (!container) return;
+
+  const bubble = document.createElement('div');
+  const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+  if (sender === 'bot') {
+    bubble.className = 'bg-indigo-950/70 border border-indigo-500/30 rounded-xl p-3 space-y-1 text-xs text-slate-200 animate-scale-in';
+    bubble.innerHTML = `
+      <div class="flex items-center justify-between text-[10px] text-indigo-400 font-bold">
+        <span class="flex items-center gap-1.5"><i class="fa-solid fa-robot text-purple-400"></i> Go Extra Mile AI Bot</span>
+        <span class="text-slate-500 font-mono">${timeStr}</span>
+      </div>
+      <p class="leading-relaxed ${isSpecial ? 'text-amber-200 font-semibold' : ''}">${text}</p>
+    `;
+  } else {
+    bubble.className = 'bg-slate-900 border border-slate-700 rounded-xl p-3 space-y-1 text-xs text-slate-200 animate-scale-in ml-6';
+    bubble.innerHTML = `
+      <div class="flex items-center justify-between text-[10px] text-emerald-400 font-bold">
+        <span class="flex items-center gap-1.5"><i class="fa-solid fa-user"></i> Prospect (${activeAutoCallData ? activeAutoCallData.targetName : 'Decision-Maker'})</span>
+        <span class="text-slate-500 font-mono">${timeStr}</span>
+      </div>
+      <p class="leading-relaxed italic">${text}</p>
+    `;
+  }
+
+  container.appendChild(bubble);
+  container.scrollTop = container.scrollHeight;
+}
+
+async function startAutomatedCallBot(dmId) {
+  try {
+    const res = await fetch(`${API_BASE}/calls/auto-call`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ decisionMakerId: dmId })
+    });
+    const json = await res.json();
+    if (!json.success) {
+      showToast(json.error || 'Failed to start automated call', 'error');
+      return;
+    }
+
+    launchAutoCallSession(json.data);
+  } catch (err) {
+    showToast('Auto-call error: ' + err.message, 'error');
+  }
+}
+
+async function startAutomatedCallBotCustom(name, phone, company, designation) {
+  try {
+    const res = await fetch(`${API_BASE}/calls/auto-call`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customPhone: phone,
+        customName: name,
+        customCompany: company,
+        customDesignation: designation
+      })
+    });
+    const json = await res.json();
+    if (!json.success) {
+      showToast(json.error || 'Failed to start automated call', 'error');
+      return;
+    }
+
+    json.data.targetName = name;
+    json.data.targetCompany = company;
+    json.data.targetDesignation = designation;
+
+    launchAutoCallSession(json.data);
+  } catch (err) {
+    showToast('Auto-call error: ' + err.message, 'error');
+  }
+}
+
+async function startAutoCallQueueCampaign(tier = 1) {
+  try {
+    const res = await fetch(`${API_BASE}/calls/auto-queue?tier=${tier}`);
+    const json = await res.json();
+    if (!json.success || !json.data || json.data.length === 0) {
+      showToast('No uncalled Tier 1 decision-makers in queue.', 'info');
+      return;
+    }
+
+    const first = json.data[0];
+    showToast(`Launching Autonomous Calling Campaign for ${first.fullName} (${first.designation})...`, 'info');
+    startAutomatedCallBot(first.id);
+  } catch (err) {
+    showToast('Campaign queue error: ' + err.message, 'error');
+  }
+}
+
+function launchAutoCallSession(callData) {
+  activeAutoCallData = callData;
+
+  document.getElementById('autoCallTargetName').innerText = callData.targetName;
+  document.getElementById('autoCallTargetDesignation').innerText = `${callData.targetDesignation} • ${callData.targetCompany}`;
+  document.getElementById('autoCallTargetPhone').innerText = callData.targetNumber;
+
+  // Display TwiML
+  const twimlEl = document.getElementById('codeTwimlDisplay');
+  if (twimlEl) twimlEl.innerText = callData.twiml;
+
+  // Clear and reset transcript
+  const transcript = document.getElementById('botTranscriptContainer');
+  if (transcript) transcript.innerHTML = '';
+
+  // Reset timer
+  clearInterval(autoCallTimerInterval);
+  autoCallSeconds = 0;
+  const durEl = document.getElementById('botCallDuration');
+  if (durEl) durEl.innerText = '00:00';
+  autoCallTimerInterval = setInterval(() => {
+    autoCallSeconds++;
+    const m = String(Math.floor(autoCallSeconds / 60)).padStart(2, '0');
+    const s = String(autoCallSeconds % 60).padStart(2, '0');
+    if (durEl) durEl.innerText = `${m}:${s}`;
+  }, 1000);
+
+  document.getElementById('modalAutoCallBot').classList.remove('hidden');
+
+  // Step 1: Greeting
+  const turn1 = callData.dialogTurns[0];
+  setTimeout(() => {
+    addTranscriptBubble('bot', turn1.botAudioText);
+    speakBotText(turn1.botAudioText);
+  }, 600);
+
+  // Step 2: Pitch
+  setTimeout(() => {
+    if (activeAutoCallData) {
+      const turn2 = callData.dialogTurns[1];
+      addTranscriptBubble('bot', turn2.botAudioText);
+      speakBotText(turn2.botAudioText);
+    }
+  }, 5000);
+}
+
+function advanceBotStep(intent) {
+  if (!activeAutoCallData) return;
+
+  if (intent === 'cost_query') {
+    addTranscriptBubble('prospect', 'What does it cost to list our brand on Go Extra Mile?');
+    setTimeout(() => {
+      const answer = 'There are absolutely zero upfront listing fees. Your brand retains 100% control over your discount percentages, featured products, and campaign duration.';
+      addTranscriptBubble('bot', answer);
+      speakBotText(answer);
+    }, 800);
+  } else if (intent === 'interested') {
+    addTranscriptBubble('prospect', 'Yes, that sounds great. Go ahead and send me the partner onboarding link on WhatsApp.');
+    setTimeout(() => {
+      const closing = `Wonderful, ${activeAutoCallData.targetName}! Dispatching our official partner onboarding link (https://www.goextramile.in/r?code=GOMILES) to your WhatsApp (${activeAutoCallData.targetNumber}) right now. Referral code GOMILES is already applied for prioritized onboarding!`;
+      addTranscriptBubble('bot', closing, true);
+      speakBotText(closing);
+
+      setTimeout(() => {
+        dispatchBotReferralWhatsApp();
+      }, 1500);
+    }, 800);
+  }
+}
+
+async function dispatchBotReferralWhatsApp() {
+  if (!activeAutoCallData) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/calls`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        companyId: activeAutoCallData.companyId,
+        decisionMakerId: activeAutoCallData.decisionMakerId,
+        outcome: 'Interested (Automated AI Call)',
+        notes: `Autonomous AI Voice Bot pitched Go Extra Mile merchant deals & product listing. Decision-maker consented to receive onboarding link.`,
+        referralShared: true,
+        sharedVia: 'WhatsApp',
+        consentVerified: true,
+        channel: 'WhatsApp'
+      })
+    });
+
+    const json = await res.json();
+    if (!json.success) {
+      showToast(json.error || 'Failed to log call', 'error');
+      return;
+    }
+
+    showToast('Automated Call Completed & Logged: Referral Link Sent!', 'success');
+    await refreshAllData();
+
+    const targetClean = activeAutoCallData.targetNumber.replace(/[^0-9]/g, '');
+    const cleanPhone = targetClean.startsWith('91') ? targetClean : '91' + targetClean.slice(-10);
+    const msgText = encodeURIComponent(`Hi ${activeAutoCallData.targetName}, great speaking with you! Here is the official Go Extra Mile partner portal link to list ${activeAutoCallData.targetCompany}'s exclusive deals and offers: https://www.goextramile.in/r?code=GOMILES (Referral Code: GOMILES)`);
+    const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${msgText}`;
+
+    window.open(waUrl, '_blank');
+  } catch (err) {
+    showToast('Error sending referral link: ' + err.message, 'error');
+  }
+}
+
+function closeAutoCallModal() {
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  clearInterval(autoCallTimerInterval);
+  document.getElementById('modalAutoCallBot').classList.add('hidden');
+  activeAutoCallData = null;
+}
+
+function endAutoCall() {
+  if (!activeAutoCallData) return;
+  closeAutoCallModal();
+  showToast('Automated call session ended.', 'info');
 }
 
 // ==========================================

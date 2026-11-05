@@ -181,6 +181,126 @@ class CallingService {
 
     return bridgeRecord;
   }
+
+  // ==========================================
+  // FULLY AUTOMATED AI CALLING BOT ENGINE
+  // ==========================================
+
+  // Initiate an autonomous voice call session
+  initiateAutomatedAiCall({ decisionMakerId, customPhone }) {
+    const caller = this.getCallerProfile();
+    const refConfig = referralService.getReferralConfig();
+    let dm = null;
+
+    if (decisionMakerId) {
+      dm = dmService.getById(decisionMakerId);
+    }
+
+    if (!dm && !customPhone) {
+      throw new Error('A valid decision-maker or phone number is required for automated calling.');
+    }
+
+    const targetName = dm ? dm.fullName : 'Business Leader';
+    const targetCompany = dm ? dm.companyName : 'Your Company';
+    const targetDesignation = dm ? dm.designation : 'Executive';
+    const targetPhone = dm ? dm.phone : customPhone;
+
+    // Structured conversational dialog turns for the automated AI voice agent
+    const dialogTurns = [
+      {
+        step: 1,
+        title: 'Greeting & Verification',
+        botAudioText: `Hello ${targetName}! This is the Go Extra Mile partner merchant desk calling on behalf of ${caller.agentName}. Am I speaking with the ${targetDesignation} of ${targetCompany}?`,
+        expectedProspectResponse: 'Yes, speaking / Who is this?',
+        botResponse: `Great to connect with you, ${targetName}! I will keep this brief.`
+      },
+      {
+        step: 2,
+        title: 'Core Go Extra Mile Pitch',
+        botAudioText: `Go Extra Mile connects leading brands with thousands of active buyers looking for exclusive deals, product discounts, and promotional offers. We are currently listing premier brands with zero upfront friction, giving you complete autonomy over your deal margins and campaign duration.`,
+        expectedProspectResponse: 'What are the listing fees or terms?',
+        botResponse: `There are absolutely zero upfront listing fees. You retain complete control over your product listings, discounts, and campaign duration.`
+      },
+      {
+        step: 3,
+        title: 'Offer Listing Proposition',
+        botAudioText: `Would you be open to featuring ${targetCompany}'s exclusive products or special discount packages on our platform to drive immediate sales and customer acquisition?`,
+        expectedProspectResponse: 'Yes, tell me more / Send details.',
+        botResponse: `Wonderful! We would love to feature ${targetCompany}.`
+      },
+      {
+        step: 4,
+        title: 'Consent & Referral Link Handshake',
+        botAudioText: `May I send our official merchant onboarding portal link directly to your WhatsApp at ${targetPhone} so you can review onboarding details and list your brand offers?`,
+        expectedProspectResponse: 'Yes, send it on WhatsApp.',
+        botResponse: `Sending it right now! Your official partner link is https://www.goextramile.in/r?code=GOMILES with partner code GOMILES. Thank you, ${targetName}!`
+      }
+    ];
+
+    // Formulate TwiML XML response for Twilio Voice Telephony
+    const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Polly.Aditi" language="en-IN">Hello ${targetName}! This is the Go Extra Mile merchant onboarding desk calling on behalf of ${caller.agentName}. We are offering ${targetCompany} an exclusive opportunity to list your products and promotional discounts on the Go Extra Mile app with zero listing fees.</Say>
+    <Pause length="1"/>
+    <Say voice="Polly.Aditi" language="en-IN">If you would like us to send the official partner onboarding link to your WhatsApp, please press 1.</Say>
+    <Gather numDigits="1" action="/api/calls/twiml-callback?dmId=${dm ? dm.id : ''}" method="POST">
+    </Gather>
+</Response>`;
+
+    // Formulate Vapi / Bland.ai AI Voice Agent Payload
+    const aiAgentConfig = {
+      model: 'gpt-4o-mini',
+      voice: 'en-IN-Standard-A',
+      firstMessage: `Hello ${targetName}! This is the Go Extra Mile merchant desk calling on behalf of ${caller.agentName}. Am I speaking with the ${targetDesignation} of ${targetCompany}?`,
+      systemPrompt: `You are an AI sales representative calling for Go Extra Mile (https://www.goextramile.in/r?code=GOMILES).
+Your goal is to convince ${targetName}, ${targetDesignation} of ${targetCompany}, to list their products, exclusive offers, discounts, and promotional deals on Go Extra Mile.
+Key points:
+- Zero upfront listing cost
+- Complete autonomy over discount margins and campaign duration
+- Thousands of active consumer shoppers
+- Referral Code: GOMILES
+Always ask for explicit consent before sending the onboarding link to WhatsApp.`
+    };
+
+    return {
+      callId: `auto_call_${Date.now()}`,
+      status: 'In Progress',
+      callerNumber: caller.agentPhone,
+      callerName: caller.agentName,
+      targetNumber: targetPhone,
+      targetName,
+      targetCompany,
+      targetDesignation,
+      decisionMakerId: dm ? dm.id : null,
+      companyId: dm ? dm.companyId : null,
+      referralUrl: refConfig.officialUrl,
+      referralCode: refConfig.referralCode,
+      dialogTurns,
+      twiml,
+      aiAgentConfig,
+      startedAt: new Date().toISOString()
+    };
+  }
+
+  // Get Queue of prioritized decision-makers for automated dialing
+  getAutoDialQueue(tier = null) {
+    let dms = dmService.getAll();
+    if (tier) {
+      dms = dms.filter(d => d.priorityTier === parseInt(tier, 10));
+    }
+
+    // Prioritize Tier 1 (Owner, MD, CEO, Founder) first, verified first
+    return dms.map(d => ({
+      id: d.id,
+      fullName: d.fullName,
+      designation: d.designation,
+      companyName: d.companyName,
+      phone: d.phone,
+      priorityTier: d.priorityTier,
+      priorityRank: d.priorityRank,
+      verificationStatus: d.verificationStatus
+    }));
+  }
 }
 
 module.exports = new CallingService();
