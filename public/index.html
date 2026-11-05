@@ -104,9 +104,11 @@
       </div>
       <div class="hidden md:flex items-center gap-3 text-slate-300">
         <span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs px-2.5 py-1 rounded-md flex items-center gap-1.5 shadow-sm">
-          <i class="fa-solid fa-phone text-emerald-400"></i> Active Caller Line: <strong id="headerCallerPhone" class="font-mono text-emerald-200">+91 8518900153</strong>
+          <i class="fa-solid fa-phone text-emerald-400"></i> My Number: <strong id="headerCallerPhone" class="font-mono text-emerald-200">+91 8518900153</strong>
         </span>
-        <span class="text-slate-400 text-xs">&bull; No customer-care contacts</span>
+        <button onclick="testAiBotOnMyNumber()" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 text-white font-bold text-xs px-2.5 py-1 rounded-md transition flex items-center gap-1.5 shadow-md shadow-emerald-600/25 cursor-pointer" title="Simulate AI voice call pitch on your phone +91 8518900153">
+          <i class="fa-solid fa-phone-volume text-yellow-300 animate-pulse"></i> Test AI Bot on My Number
+        </button>
       </div>
     </div>
   </div>
@@ -166,6 +168,9 @@
               </div>
             </div>
             <div class="pt-2 border-t border-slate-800 space-y-2">
+              <button onclick="testAiBotOnMyNumber()" class="w-full bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 hover:from-emerald-500 text-white text-xs font-bold py-2 rounded-lg shadow-md transition flex items-center justify-center gap-1.5 border border-emerald-400/40" title="Simulate AI Voice Call with spoken audio on your number +91 8518900153">
+                <i class="fa-solid fa-phone-volume text-yellow-300 animate-pulse"></i> Test AI Bot on My Number (+91 8518900153)
+              </button>
               <button onclick="startAutoCallQueueCampaign(1)" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold py-2 rounded shadow transition flex items-center justify-center gap-1.5">
                 <i class="fa-solid fa-robot"></i> Auto-Dial Priority Tier 1 Leads
               </button>
@@ -1322,6 +1327,9 @@
           </div>
         </div>
         <div class="flex items-center gap-2">
+          <button onclick="testAiBotOnMyNumber()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-2.5 py-1.5 rounded-lg transition flex items-center gap-1 shadow" title="Re-test on Ritik Jain (+91 8518900153)">
+            <i class="fa-solid fa-phone-volume text-yellow-300"></i> Test My Number
+          </button>
           <button onclick="playFullBotSpeech()" id="btnAutoSpeakFull" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow">
             <i class="fa-solid fa-play"></i> Auto-Speak Pitch
           </button>

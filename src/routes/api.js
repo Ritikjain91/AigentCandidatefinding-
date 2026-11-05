@@ -680,6 +680,32 @@ router.post('/calls/auto-call', (req, res) => {
   }
 });
 
+// Quick Test Endpoint: Test AI Voice Bot on User's Number (+91 8518900153)
+router.post('/calls/test-bot', (req, res) => {
+  try {
+    const caller = callingService.getCallerProfile();
+    const testNumber = caller.agentPhone || '+91 8518900153';
+    const testName = caller.agentName || 'Ritik Jain';
+
+    const autoCall = callingService.initiateAutomatedAiCall({
+      customPhone: testNumber,
+      customName: testName,
+      customCompany: 'Ritik Jain Retail (AI Bot Test Sandbox)',
+      customDesignation: 'Owner & Founder',
+      callerIdMode: req.body.callerIdMode || 'unknown',
+      forceOverride: true
+    });
+
+    res.json({
+      success: true,
+      message: `AI Voice Bot test call initiated on your number ${testNumber}!`,
+      data: autoCall
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 router.get('/calls/auto-queue', (req, res) => {
   try {
     const queue = callingService.getAutoDialQueue(req.query.tier);

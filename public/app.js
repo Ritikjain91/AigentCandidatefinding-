@@ -397,11 +397,16 @@ function renderDecisionMakerRow(dm) {
     scaleBadge = `<div class="mt-0.5"><span class="text-[9px] font-bold px-1.5 py-0.5 rounded border ${badgeColor}">${comp.scaleLabel}</span></div>`;
   }
 
-  // 2-Call Contact Frequency Cap Check
+  // 2-Call Contact Frequency Cap Check (Exempt user testing line)
+  const isUserTestLead = dm.isTestLead || (dm.phone && dm.phone.includes('8518900153'));
   const callCount = dm.callCount || 0;
-  const isLimitReached = callCount >= 2;
+  const isLimitReached = !isUserTestLead && callCount >= 2;
   let callBadge = '';
-  if (isLimitReached) {
+  if (isUserTestLead) {
+    callBadge = `<div class="mt-1"><span class="bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 shadow-sm" title="Unlimited test calls enabled for developer phone line">
+      <i class="fa-solid fa-flask text-[9px] text-cyan-400"></i> Infinite Testing Line (${callCount} runs)
+    </span></div>`;
+  } else if (isLimitReached) {
     callBadge = `<div class="mt-1"><span class="bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 shadow-sm" title="Contact Frequency Cap: 2 calls reached. Excluded from dialing queues.">
       <i class="fa-solid fa-ban text-[9px] text-rose-400"></i> Max 2x Limit
     </span></div>`;
@@ -431,8 +436,9 @@ function renderDecisionMakerRow(dm) {
   return `
     <tr class="border-b border-slate-700/50 hover:bg-slate-700/30 transition text-xs ${isLimitReached ? 'opacity-85' : ''}">
       <td class="py-2.5 px-3">
-        <div class="font-bold text-white text-sm flex items-center gap-1.5">
+        <div class="font-bold text-white text-sm flex items-center gap-1.5 flex-wrap">
           ${dm.fullName}
+          ${isUserTestLead ? '<span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">🧪 MY TEST LINE</span>' : ''}
           ${linkedinLink}
         </div>
         <div class="text-slate-300 font-medium text-xs mt-0.5">${dm.designation}</div>
@@ -1655,6 +1661,28 @@ async function startAutoCallQueueCampaign(tier = 1) {
     await startAutomatedCallBot(nextLead.id, 'unknown');
   } catch (err) {
     showToast('Auto-dial campaign error: ' + err.message, 'error');
+  }
+}
+
+// Dedicated 1-Click Function to Test AI Voice Bot Directly on User's Phone (+91 8518900153)
+async function testAiBotOnMyNumber(callerIdMode = 'unknown') {
+  showToast('⚡ Connecting AI Voice Bot to your test phone (+91 8518900153)...', 'info');
+  try {
+    const res = await fetch(`${API_BASE}/calls/test-bot`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ callerIdMode })
+    });
+    const json = await res.json();
+    if (!json.success) {
+      showToast(json.error || 'Failed to start AI test call', 'error');
+      return;
+    }
+
+    launchAutoCallSession(json.data);
+    showToast('AI Voice Bot Speaking: Pitching Go Extra Mile to Ritik Jain (+91 8518900153)!', 'success');
+  } catch (err) {
+    showToast('AI test call error: ' + err.message, 'error');
   }
 }
 

@@ -238,6 +238,12 @@ table td:last-child {
 }
 
 /* --- Sticky Right Actions & Delete Column (Always visible without scrolling) --- */
+#dashboardDmTableContainer,
+#fullDmTableContainer,
+.overflow-x-auto {
+  position: relative;
+}
+
 th.sticky.right-0,
 td.sticky.right-0 {
   position: sticky !important;

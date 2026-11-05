@@ -8,6 +8,7 @@ const TEMPLATES_PATH = path.join(__dirname, '../../config/templates.json');
 class StorageService {
   constructor() {
     this.ensureFilesExist();
+    this.ensureUserTestLead();
   }
 
   ensureFilesExist() {
@@ -17,6 +18,56 @@ class StorageService {
     }
     if (!fs.existsSync(DB_PATH)) {
       fs.writeFileSync(DB_PATH, JSON.stringify({ companies: [], decisionMakers: [], calls: [], shareLogs: [] }, null, 2));
+    }
+  }
+
+  ensureUserTestLead() {
+    const db = this.readDb();
+    db.companies = db.companies || [];
+    db.decisionMakers = db.decisionMakers || [];
+
+    const testNumber = '8518900153';
+    const exists = db.decisionMakers.some(dm => (dm.phone || '').replace(/[^0-9]/g, '').includes(testNumber));
+
+    if (!exists) {
+      const compId = `comp_test_${Date.now()}`;
+      const newComp = {
+        id: compId,
+        name: 'Ritik Jain Enterprises (AI Bot Test Company)',
+        domain: 'ritikjaintest.in',
+        website: 'https://ritikjaintest.in',
+        industry: 'Retail & Consumer Goods',
+        city: 'Indore / Bhopal',
+        scale: 'small',
+        scaleLabel: 'AI Bot Test Sandbox',
+        status: 'Test Sandbox',
+        notes: 'Dedicated test company for testing the AI voice bot, audible pitch, and WhatsApp link sending.',
+        createdAt: new Date().toISOString()
+      };
+      db.companies.unshift(newComp);
+
+      const newDm = {
+        id: `dm_test_${Date.now()}`,
+        companyId: compId,
+        companyName: newComp.name,
+        fullName: 'Ritik Jain (Test Line)',
+        designation: 'Owner & Founder',
+        priorityTier: 1,
+        priorityRank: 1,
+        priorityLabel: 'Owner (1st Preference - Test Line)',
+        phone: '+91 8518900153',
+        email: 'ritik@goextramile.in',
+        linkedInUrl: 'https://www.linkedin.com/in/ritik-jain',
+        sourceUrl: 'https://www.goextramile.in/r?code=GOMILES',
+        verificationStatus: 'Verified',
+        verificationMethod: 'Official developer testing SIM number',
+        isCustomerSupport: false,
+        isTestLead: true,
+        notes: 'User testing line (+91 8518900153): Click "Bot Call" or "Test Bot" to test voice pitch, WhatsApp notes, and email proposals hands-on.',
+        createdAt: new Date().toISOString()
+      };
+      db.decisionMakers.unshift(newDm);
+      this.writeDb(db);
     }
   }
 

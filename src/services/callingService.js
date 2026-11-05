@@ -79,7 +79,7 @@ class CallingService {
   }
 
   // Initiate a call session (supports User SIM 8518900153 or Unknown / Masked Caller ID)
-  initiateCallSession({ decisionMakerId, customPhone, callMode = 'device-dialer', callerIdMode = 'user-sim', forceOverride = false }) {
+  initiateCallSession({ decisionMakerId, customPhone, customName, customCompany, customDesignation, callMode = 'device-dialer', callerIdMode = 'user-sim', forceOverride = false }) {
     const caller = this.getCallerProfile();
     let dm = null;
 
@@ -92,16 +92,22 @@ class CallingService {
     }
 
     const targetPhone = dm ? dm.phone : customPhone;
-    const targetCompany = dm ? dm.companyName : 'Company';
+    const targetCompany = dm ? dm.companyName : (customCompany || 'Company');
+    const targetName = dm ? dm.fullName : (customName || 'Prospect');
+    const targetDesignation = dm ? dm.designation : (customDesignation || 'Leader');
 
-    // Enforcement: Maximum 2 calls per company/decision-maker
+    const cleanUserSim = (caller.agentPhone || '').replace(/[^0-9]/g, '').slice(-10);
+    const cleanTarget = targetPhone.replace(/[^0-9]/g, '').slice(-10);
+    const isTestCall = cleanTarget === cleanUserSim || (dm && dm.isTestLead);
+
+    // Enforcement: Maximum 2 calls per company/decision-maker (exempt for user testing line)
     const currentCallCount = storage.getCallCountForContact({
       decisionMakerId,
       companyId: dm ? dm.companyId : null,
       phone: targetPhone
     });
 
-    if (currentCallCount >= 2 && !forceOverride) {
+    if (currentCallCount >= 2 && !forceOverride && !isTestCall) {
       throw new Error(`Contact Frequency Limit Reached: ${targetCompany} has already been called ${currentCallCount} times. A prospect cannot be called more than 2 times.`);
     }
 
@@ -204,7 +210,7 @@ class CallingService {
   // ==========================================
 
   // Initiate an autonomous voice call session (supports User SIM 8518900153 or Unknown / Masked Caller ID)
-  initiateAutomatedAiCall({ decisionMakerId, customPhone, callerIdMode = 'user-sim', forceOverride = false }) {
+  initiateAutomatedAiCall({ decisionMakerId, customPhone, customName, customCompany, customDesignation, callerIdMode = 'user-sim', forceOverride = false }) {
     const caller = this.getCallerProfile();
     const refConfig = referralService.getReferralConfig();
     let dm = null;
@@ -218,22 +224,26 @@ class CallingService {
     }
 
     const targetPhone = dm ? dm.phone : customPhone;
-    const targetCompany = dm ? dm.companyName : 'Your Company';
-    const targetName = dm ? dm.fullName : 'Business Leader';
+    const targetCompany = dm ? dm.companyName : (customCompany || 'Your Company');
+    const targetName = dm ? dm.fullName : (customName || 'Business Leader');
+    const targetDesignation = dm ? dm.designation : (customDesignation || 'Executive');
 
-    // Enforcement: Maximum 2 calls per company/decision-maker
+    const cleanUserSim = (caller.agentPhone || '').replace(/[^0-9]/g, '').slice(-10);
+    const cleanTarget = targetPhone.replace(/[^0-9]/g, '').slice(-10);
+    const isTestCall = cleanTarget === cleanUserSim || (dm && dm.isTestLead);
+
+    // Enforcement: Maximum 2 calls per company/decision-maker (exempt for user testing line)
     const currentCallCount = storage.getCallCountForContact({
       decisionMakerId,
       companyId: dm ? dm.companyId : null,
       phone: targetPhone
     });
 
-    if (currentCallCount >= 2 && !forceOverride) {
+    if (currentCallCount >= 2 && !forceOverride && !isTestCall) {
       throw new Error(`Contact Frequency Limit Reached: ${targetCompany} (${targetName}) has already been called ${currentCallCount} times. A prospect cannot be called more than 2 times.`);
     }
 
     const isUnknown = callerIdMode === 'unknown';
-    const targetDesignation = dm ? dm.designation : 'Executive';
 
     // Structured conversational dialog turns for the automated AI voice agent
     const dialogTurns = [
