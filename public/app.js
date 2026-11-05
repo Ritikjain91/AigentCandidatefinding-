@@ -514,16 +514,43 @@ async function toggleVerification(id, newStatus) {
 }
 
 async function deleteDecisionMaker(id) {
-  if (!confirm('Are you sure you want to remove this decision-maker record?')) return;
+  if (!confirm('Are you sure you want to remove this decision-maker record? Auto-replenish will instantly generate a fresh replacement.')) return;
   try {
     const res = await fetch(`${API_BASE}/decision-makers/${id}`, { method: 'DELETE' });
     const json = await res.json();
     if (json.success) {
-      showToast('Contact removed', 'success');
+      if (json.data && json.data.autoReplenished && json.data.newLead) {
+        showToast(`Contact removed. Auto-replenished replacement lead: ${json.data.newLead.fullName} (${json.data.newLead.designation} at ${json.data.newLead.companyName})!`, 'success');
+      } else {
+        showToast(json.message || 'Contact removed', 'success');
+      }
       await refreshAllData();
+    } else {
+      showToast('Error removing contact: ' + (json.error || 'Failed'), 'error');
     }
   } catch (err) {
     showToast('Error removing contact: ' + err.message, 'error');
+  }
+}
+
+async function triggerManualReplenish(count = 3) {
+  try {
+    showToast(`Autonomous Engine searching & generating ${count} fresh decision-maker leads...`, 'info');
+    const res = await fetch(`${API_BASE}/leads/replenish`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ count })
+    });
+    const json = await res.json();
+    if (json.success) {
+      const generatedCount = json.count || (json.data && json.data.length) || count;
+      showToast(`Successfully discovered & added ${generatedCount} fresh verified decision-makers to pipeline!`, 'success');
+      await refreshAllData();
+    } else {
+      showToast('Replenish error: ' + (json.error || 'Failed'), 'error');
+    }
+  } catch (err) {
+    showToast('Error generating leads: ' + err.message, 'error');
   }
 }
 

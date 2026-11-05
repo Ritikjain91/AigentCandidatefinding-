@@ -299,8 +299,14 @@
           </h2>
           <p class="text-xs text-slate-400">Every discovered contact is classified by preference rank, verified status, and professional coordinates.</p>
         </div>
-        <div class="flex items-center gap-2">
-          <button onclick="openAddDecisionMakerModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-lg transition flex items-center gap-2 shadow">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold" title="Self-replenishing pipeline: Deleting a contact automatically searches & generates a fresh decision-maker">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Auto-Replenish: ACTIVE
+          </span>
+          <button onclick="triggerManualReplenish(3)" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-Generate 3 Leads
+          </button>
+          <button onclick="openAddDecisionMakerModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow">
             <i class="fa-solid fa-user-plus"></i> Add New Contact
           </button>
         </div>

@@ -4,7 +4,7 @@
     "referralCode": "GOMILES",
     "appName": "Go Extra Mile",
     "portalName": "Go Extra Mile Merchant & Partner Portal",
-    "salesPitch": "Join Go Extra Mile as a featured partner to list exclusive brand offers, special discounts, promotional deals, and reach thousands of verified consumers."
+    "salesPitch": "Introduce Go Extra Mile and convince relevant companies to list their products, exclusive offers, discounts and promotional deals on the platform."
   },
   "decisionMakerTiers": [
     {
@@ -81,6 +81,16 @@
     "callMode": "device-dialer",
     "enableBridge": true,
     "enableAiPitchAssistant": true
+  },
+  "autoReplenish": {
+    "enabled": true,
+    "minLeadThreshold": 8,
+    "batchSize": 1,
+    "autoDiscoverOnDelete": true,
+    "preferredTiers": [
+      1,
+      2,
+      3
+    ]
   }
 }
-

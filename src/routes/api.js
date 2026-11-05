@@ -225,13 +225,42 @@ router.post('/decision-makers/:id/verify', (req, res) => {
   }
 });
 
-// Delete Decision Maker
+// Delete Decision Maker (With Auto-Replenish if enabled)
 router.delete('/decision-makers/:id', (req, res) => {
   try {
-    dmService.delete(req.params.id);
-    res.json({ success: true, message: 'Decision maker deleted.' });
+    const result = dmService.delete(req.params.id);
+    const msg = result.autoReplenished
+      ? `Contact removed. Auto-Replenished fresh lead: ${result.newLead.fullName} (${result.newLead.designation} - ${result.newCompany.name})!`
+      : 'Decision maker deleted.';
+    res.json({ success: true, message: msg, data: result });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Auto-Replenish Batch of Fresh Leads
+router.post('/leads/replenish', (req, res) => {
+  try {
+    const count = parseInt(req.body.count || 1, 10);
+    const batch = researchService.replenishBatch(count);
+    res.json({
+      success: true,
+      message: `Auto-generated ${batch.length} fresh prioritized decision-makers!`,
+      count: batch.length,
+      data: batch
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Toggle / Configure Auto-Replenish Mode
+router.put('/leads/replenish-config', (req, res) => {
+  try {
+    const updated = storage.updateConfig({ autoReplenish: req.body });
+    res.json({ success: true, message: 'Auto-replenish configuration updated.', data: updated.autoReplenish });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
   }
 });
 

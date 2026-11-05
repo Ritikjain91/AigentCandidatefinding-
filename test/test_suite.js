@@ -266,6 +266,55 @@ async function runTests() {
     assert.ok(emailResult.mailtoUrl.startsWith('mailto:rajesh%40auroraretail.in?subject='));
   });
 
+  // TEST 15: Autonomous Fresh Lead Generation
+  test('Requirement: Autonomous engine generates and saves valid Tier 1 decision-maker lead', () => {
+    const fresh = researchService.generateAndSaveFreshLead();
+    assert.ok(fresh.company);
+    assert.ok(fresh.decisionMaker);
+    assert.strictEqual(fresh.decisionMaker.priorityTier, 1);
+    assert.strictEqual(fresh.decisionMaker.verificationStatus, 'Verified');
+    assert.ok(fresh.decisionMaker.phone.startsWith('+91'));
+    // Ensure customer care guardrail is respected
+    assert.strictEqual(fresh.decisionMaker.phone.includes('1800'), false);
+    assert.strictEqual(fresh.decisionMaker.phone.includes('1860'), false);
+  });
+
+  // TEST 16: Replenish Batch of Leads
+  test('Requirement: Replenish batch creates requested count of fresh merchant leads', () => {
+    const initialCount = storage.getDecisionMakers().length;
+    const batch = researchService.replenishBatch(2);
+    assert.strictEqual(batch.length, 2);
+    const newCount = storage.getDecisionMakers().length;
+    assert.strictEqual(newCount, initialCount + 2);
+  });
+
+  // TEST 17: Auto-Replenish on Lead Deletion
+  test('Requirement: Deleting a decision-maker automatically generates a replacement lead', () => {
+    // Enable autoReplenish
+    storage.updateConfig({ autoReplenish: { enabled: true, autoDiscoverOnDelete: true } });
+    
+    // Create a temporary lead to delete
+    const tempLead = dmService.create({
+      companyName: 'Temporary Retail Co',
+      fullName: 'Aakash Verma',
+      designation: 'Owner',
+      phone: '+91 99999 12345',
+      verificationStatus: 'Verified',
+      sourceUrl: 'https://tempretail.in'
+    });
+
+    const beforeDeleteCount = storage.getDecisionMakers().length;
+    const deleteResult = dmService.delete(tempLead.id);
+
+    assert.strictEqual(deleteResult.deleted, true);
+    assert.strictEqual(deleteResult.autoReplenished, true);
+    assert.ok(deleteResult.newLead);
+    assert.strictEqual(deleteResult.newLead.priorityTier, 1);
+    // Overall count should remain equal because 1 was deleted and 1 was auto-generated
+    const afterDeleteCount = storage.getDecisionMakers().length;
+    assert.strictEqual(afterDeleteCount, beforeDeleteCount);
+  });
+
   console.log(`\n========================================`);
   console.log(`Total tests: ${passed + failed}`);
   console.log(`Passed: ${passed}`);

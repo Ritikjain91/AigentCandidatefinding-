@@ -251,7 +251,28 @@ class DecisionMakerService {
   }
 
   delete(id) {
-    return storage.deleteDecisionMaker(id);
+    const existing = storage.getDecisionMakerById(id);
+    const deleted = storage.deleteDecisionMaker(id);
+    const config = storage.getConfig();
+
+    let autoReplenished = null;
+    if (config.autoReplenish?.autoDiscoverOnDelete) {
+      try {
+        const researchService = require('./researchService');
+        autoReplenished = researchService.generateAndSaveFreshLead();
+      } catch (err) {
+        console.warn('Auto-replenish on delete notice:', err.message);
+      }
+    }
+
+    return {
+      deleted: !!deleted,
+      deletedId: id,
+      deletedName: existing ? existing.fullName : '',
+      autoReplenished: !!autoReplenished,
+      newLead: autoReplenished ? autoReplenished.decisionMaker : null,
+      newCompany: autoReplenished ? autoReplenished.company : null
+    };
   }
 }
 
