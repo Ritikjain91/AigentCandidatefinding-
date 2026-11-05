@@ -382,8 +382,8 @@ function renderDecisionMakerRow(dm) {
       </td>
       <td class="py-3 px-4 text-right">
         <div class="flex items-center justify-end gap-1.5">
-          <button onclick="startAutomatedCallBot('${dm.id}')" class="bg-purple-600 hover:bg-purple-500 text-white font-bold px-2 py-1 rounded text-xs transition flex items-center gap-1 shadow-sm" title="Launch Autonomous AI Voice Calling Bot">
-            <i class="fa-solid fa-robot"></i> Auto-Call
+          <button onclick="startAutomatedCallBot('${dm.id}', 'unknown')" class="bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white font-bold px-2 py-1 rounded text-xs transition flex items-center gap-1 shadow-sm" title="Directly call from Unknown Number and AI Bot speaks">
+            <i class="fa-solid fa-user-secret"></i> Bot Call (Unknown)
           </button>
           <button onclick="startCallFromMyNumber('${dm.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2 py-1 rounded text-xs transition flex items-center gap-1 shadow-sm" title="Call from your number +91 8518900153">
             <i class="fa-solid fa-phone"></i> Call (8518900153)
@@ -1237,6 +1237,59 @@ function renderActiveCallModal(sess) {
   showToast(`Active call session initiated from your number ${sess.callerNumber}!`, 'success');
 }
 
+let activeCallerMode = 'user-sim';
+
+function switchCallerIdMode(mode) {
+  activeCallerMode = mode;
+  if (!activeCallSessionData) return;
+
+  const cleanPhone = activeCallSessionData.targetCleanPhone;
+  const telBtn = document.getElementById('btnDirectDialTel');
+  const qrImg = document.getElementById('qrDialImage');
+  const headerNum = document.getElementById('activeCallMyNumber');
+
+  if (mode === 'unknown') {
+    // GSM #31# prefix instructs cellular carrier to mask outbound Caller ID
+    const privateTelUri = `tel:%2331%23%2B${cleanPhone}`;
+    if (telBtn) {
+      telBtn.href = privateTelUri;
+      telBtn.innerHTML = '<i class="fa-solid fa-user-secret"></i> Dial Private (#31#)';
+      telBtn.className = 'bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-2.5 rounded-lg transition flex items-center justify-center gap-2 shadow-lg shadow-purple-600/20';
+    }
+    if (qrImg) {
+      qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(privateTelUri)}`;
+    }
+    if (headerNum) {
+      headerNum.textContent = 'Private / Unknown Number (Masked)';
+      headerNum.className = 'text-purple-300 font-mono font-bold';
+    }
+    showToast('Outbound line set to Private / Unknown Number (#31#)', 'info');
+  } else {
+    const simTelUri = `tel:+${cleanPhone}`;
+    if (telBtn) {
+      telBtn.href = simTelUri;
+      telBtn.innerHTML = '<i class="fa-solid fa-phone"></i> Dial on Phone (SIM)';
+      telBtn.className = 'bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-lg transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20';
+    }
+    if (qrImg) {
+      qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(simTelUri)}`;
+    }
+    if (headerNum) {
+      headerNum.textContent = '+91 8518900153';
+      headerNum.className = 'text-emerald-300 font-mono font-bold';
+    }
+    showToast('Outbound line set to Your Phone SIM (+91 8518900153)', 'info');
+  }
+}
+
+function switchFromManualToBotCall() {
+  if (!activeCallSessionData) return;
+  const dmId = activeCallSessionData.decisionMakerId;
+  const mode = activeCallerMode;
+  closeActiveCallModal();
+  startAutomatedCallBot(dmId, mode);
+}
+
 async function triggerCallBridge() {
   if (!activeCallSessionData) return;
 
@@ -1354,13 +1407,32 @@ function toggleVoiceSpeech() {
   }
 }
 
-function speakBotText(text) {
-  if (!voiceSpeechEnabled || !window.speechSynthesis) return;
+function speakBotText(text, onDone = null) {
+  if (!voiceSpeechEnabled || !window.speechSynthesis) {
+    if (onDone) setTimeout(onDone, 1200);
+    return;
+  }
   window.speechSynthesis.cancel();
 
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.rate = 1.0;
-  utterance.pitch = 1.0;
+  utterance.rate = 0.95;
+  utterance.pitch = 1.02;
+
+  const wave = document.getElementById('botSpeakingWave');
+  const statusLbl = document.getElementById('botSpeakingStatusLabel');
+
+  utterance.onstart = () => {
+    if (wave) wave.classList.remove('opacity-40');
+    if (statusLbl) statusLbl.innerText = 'AI Bot is Speaking...';
+  };
+  utterance.onend = () => {
+    if (statusLbl) statusLbl.innerText = 'Bot Ready';
+    if (onDone) setTimeout(onDone, 900);
+  };
+  utterance.onerror = () => {
+    if (statusLbl) statusLbl.innerText = 'Bot Ready';
+    if (onDone) onDone();
+  };
 
   const voices = window.speechSynthesis.getVoices();
   const inVoice = voices.find(v => v.lang.includes('en-IN') || v.name.includes('India')) ||
@@ -1382,7 +1454,7 @@ function addTranscriptBubble(sender, text, isSpecial = false) {
     bubble.className = 'bg-indigo-950/70 border border-indigo-500/30 rounded-xl p-3 space-y-1 text-xs text-slate-200 animate-scale-in';
     bubble.innerHTML = `
       <div class="flex items-center justify-between text-[10px] text-indigo-400 font-bold">
-        <span class="flex items-center gap-1.5"><i class="fa-solid fa-robot text-purple-400"></i> Go Extra Mile AI Bot</span>
+        <span class="flex items-center gap-1.5"><i class="fa-solid fa-robot text-purple-400"></i> Go Extra Mile AI Bot (Audible Voice)</span>
         <span class="text-slate-500 font-mono">${timeStr}</span>
       </div>
       <p class="leading-relaxed ${isSpecial ? 'text-amber-200 font-semibold' : ''}">${text}</p>
@@ -1402,12 +1474,12 @@ function addTranscriptBubble(sender, text, isSpecial = false) {
   container.scrollTop = container.scrollHeight;
 }
 
-async function startAutomatedCallBot(dmId) {
+async function startAutomatedCallBot(dmId, callerIdMode = 'unknown') {
   try {
     const res = await fetch(`${API_BASE}/calls/auto-call`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ decisionMakerId: dmId })
+      body: JSON.stringify({ decisionMakerId: dmId, callerIdMode })
     });
     const json = await res.json();
     if (!json.success) {
@@ -1421,7 +1493,7 @@ async function startAutomatedCallBot(dmId) {
   }
 }
 
-async function startAutomatedCallBotCustom(name, phone, company, designation) {
+async function startAutomatedCallBotCustom(name, phone, company, designation, callerIdMode = 'unknown') {
   try {
     const res = await fetch(`${API_BASE}/calls/auto-call`, {
       method: 'POST',
@@ -1430,7 +1502,8 @@ async function startAutomatedCallBotCustom(name, phone, company, designation) {
         customPhone: phone,
         customName: name,
         customCompany: company,
-        customDesignation: designation
+        customDesignation: designation,
+        callerIdMode
       })
     });
     const json = await res.json();
@@ -1449,20 +1522,35 @@ async function startAutomatedCallBotCustom(name, phone, company, designation) {
   }
 }
 
-async function startAutoCallQueueCampaign(tier = 1) {
-  try {
-    const res = await fetch(`${API_BASE}/calls/auto-queue?tier=${tier}`);
-    const json = await res.json();
-    if (!json.success || !json.data || json.data.length === 0) {
-      showToast('No uncalled Tier 1 decision-makers in queue.', 'info');
-      return;
-    }
+function toggleAutoCallCallerMode(mode) {
+  if (!activeAutoCallData) return;
+  activeAutoCallData.callerIdMode = mode;
+  const isUnknown = mode === 'unknown';
+  activeAutoCallData.isUnknownNumber = isUnknown;
 
-    const first = json.data[0];
-    showToast(`Launching Autonomous Calling Campaign for ${first.fullName} (${first.designation})...`, 'info');
-    startAutomatedCallBot(first.id);
-  } catch (err) {
-    showToast('Campaign queue error: ' + err.message, 'error');
+  const displayEl = document.getElementById('autoCallCallerDisplay');
+  const badgeEl = document.getElementById('autoCallBadge');
+
+  if (isUnknown) {
+    if (displayEl) {
+      displayEl.innerText = 'Private / Unknown Number (Masked PBX)';
+      displayEl.className = 'text-purple-300 font-mono';
+    }
+    if (badgeEl) {
+      badgeEl.innerText = 'UNKNOWN NUMBER ACTIVE';
+      badgeEl.className = 'text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/40 px-2 py-0.5 rounded-full font-bold';
+    }
+    showToast('Calling as Unknown / Private Number (Caller ID Masked)', 'info');
+  } else {
+    if (displayEl) {
+      displayEl.innerText = '+91 8518900153 (SIM Line)';
+      displayEl.className = 'text-emerald-300 font-mono';
+    }
+    if (badgeEl) {
+      badgeEl.innerText = 'MY PHONE LINE ACTIVE';
+      badgeEl.className = 'text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full font-bold';
+    }
+    showToast('Calling from your mobile line +91 8518900153', 'info');
   }
 }
 
@@ -1473,9 +1561,34 @@ function launchAutoCallSession(callData) {
   document.getElementById('autoCallTargetDesignation').innerText = `${callData.targetDesignation} • ${callData.targetCompany}`;
   document.getElementById('autoCallTargetPhone').innerText = callData.targetNumber;
 
-  // Display TwiML
-  const twimlEl = document.getElementById('codeTwimlDisplay');
-  if (twimlEl) twimlEl.innerText = callData.twiml;
+  // Caller ID Display
+  const isUnknown = callData.isUnknownNumber !== false;
+  const displayEl = document.getElementById('autoCallCallerDisplay');
+  const badgeEl = document.getElementById('autoCallBadge');
+  const radUnknown = document.getElementById('autoRadioUnknown');
+  const radSim = document.getElementById('autoRadioSim');
+
+  if (isUnknown) {
+    if (displayEl) {
+      displayEl.innerText = 'Private / Unknown Number (Masked PBX)';
+      displayEl.className = 'text-purple-300 font-mono';
+    }
+    if (badgeEl) {
+      badgeEl.innerText = 'UNKNOWN NUMBER ACTIVE';
+      badgeEl.className = 'text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/40 px-2 py-0.5 rounded-full font-bold';
+    }
+    if (radUnknown) radUnknown.checked = true;
+  } else {
+    if (displayEl) {
+      displayEl.innerText = `${callData.callerNumber || '+91 8518900153'} (SIM Line)`;
+      displayEl.className = 'text-emerald-300 font-mono';
+    }
+    if (badgeEl) {
+      badgeEl.innerText = 'MY PHONE LINE ACTIVE';
+      badgeEl.className = 'text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full font-bold';
+    }
+    if (radSim) radSim.checked = true;
+  }
 
   // Clear and reset transcript
   const transcript = document.getElementById('botTranscriptContainer');
@@ -1495,7 +1608,7 @@ function launchAutoCallSession(callData) {
 
   document.getElementById('modalAutoCallBot').classList.remove('hidden');
 
-  // Step 1: Greeting
+  // Step 1: Greeting - Bot speaks directly!
   const turn1 = callData.dialogTurns[0];
   setTimeout(() => {
     addTranscriptBubble('bot', turn1.botAudioText);
@@ -1509,7 +1622,28 @@ function launchAutoCallSession(callData) {
       addTranscriptBubble('bot', turn2.botAudioText);
       speakBotText(turn2.botAudioText);
     }
-  }, 5000);
+  }, 5500);
+}
+
+function playFullBotSpeech() {
+  if (!activeAutoCallData || !activeAutoCallData.dialogTurns) return;
+
+  const turns = activeAutoCallData.dialogTurns;
+  showToast('Starting hands-free autonomous bot pitch speech...', 'info');
+
+  let current = 0;
+  function speakNextTurn() {
+    if (!activeAutoCallData || current >= turns.length) {
+      showToast('Completed autonomous voice bot pitch sequence!', 'success');
+      return;
+    }
+    const t = turns[current];
+    addTranscriptBubble('bot', t.botAudioText);
+    current++;
+    speakBotText(t.botAudioText, speakNextTurn);
+  }
+
+  speakNextTurn();
 }
 
 function advanceBotStep(intent) {

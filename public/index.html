@@ -1014,6 +1014,24 @@
 
       <!-- Prospect Contact Card & Phone Trigger Options -->
       <div class="bg-slate-900/90 border border-slate-700 rounded-xl p-4 space-y-4">
+        <!-- Caller Line Selector (User SIM vs Unknown Number) -->
+        <div class="bg-slate-950/80 border border-slate-700/80 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div class="flex items-center gap-2">
+            <span class="text-slate-400 font-semibold"><i class="fa-solid fa-tower-cell text-amber-400"></i> Outbound Line:</span>
+            <label class="flex items-center gap-1.5 cursor-pointer text-slate-200">
+              <input type="radio" id="callRadioSim" name="callerIdSelector" value="user-sim" checked onchange="switchCallerIdMode('user-sim')" class="accent-emerald-500">
+              <span>My SIM (<strong class="font-mono text-emerald-300">+91 8518900153</strong>)</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer text-slate-200 ml-2">
+              <input type="radio" id="callRadioUnknown" name="callerIdSelector" value="unknown" onchange="switchCallerIdMode('unknown')" class="accent-purple-500">
+              <span class="text-purple-300 font-bold flex items-center gap-1"><i class="fa-solid fa-user-secret"></i> Unknown / Private Number</span>
+            </label>
+          </div>
+          <button onclick="switchFromManualToBotCall()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-robot"></i> Switch to AI Voice Bot Call
+          </button>
+        </div>
+
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div class="space-y-1">
             <div class="flex items-center gap-2">
@@ -1157,16 +1175,42 @@
           <div>
             <h3 class="text-base font-bold text-white flex items-center gap-2">
               Autonomous AI Voice Calling Bot
-              <span class="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/40 px-2 py-0.5 rounded-full font-bold">ACTIVE BOT</span>
+              <span id="autoCallBadge" class="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/40 px-2 py-0.5 rounded-full font-bold">UNKNOWN NUMBER ACTIVE</span>
             </h3>
-            <p class="text-xs text-slate-400">Caller Line: <strong class="text-emerald-300 font-mono">+91 8518900153</strong> &bull; Calling Decision-Maker</p>
+            <p class="text-xs text-slate-400">Caller Line: <strong id="autoCallCallerDisplay" class="text-purple-300 font-mono">Private / Unknown Number (Masked PBX)</strong> &bull; Calling Decision-Maker</p>
           </div>
         </div>
         <div class="flex items-center gap-2">
+          <button onclick="playFullBotSpeech()" id="btnAutoSpeakFull" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-play"></i> Auto-Speak Pitch
+          </button>
           <button onclick="toggleVoiceSpeech()" id="btnVoiceToggle" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5">
             <i class="fa-solid fa-volume-high text-amber-400" id="voiceToggleIcon"></i> <span id="voiceToggleLabel">Voice ON</span>
           </button>
           <button onclick="closeAutoCallModal()" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      </div>
+
+      <!-- Caller Line Switcher (Unknown vs My SIM) & Voice Visualizer Wave -->
+      <div class="bg-slate-950/80 border border-slate-700/80 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div class="flex items-center gap-3">
+          <span class="text-slate-400 font-semibold"><i class="fa-solid fa-phone-slash text-purple-400"></i> Outbound Line:</span>
+          <label class="flex items-center gap-1.5 cursor-pointer text-slate-200">
+            <input type="radio" id="autoRadioUnknown" name="autoCallerMode" value="unknown" checked onchange="toggleAutoCallCallerMode('unknown')" class="accent-purple-500">
+            <span class="text-purple-300 font-bold"><i class="fa-solid fa-user-secret"></i> Unknown Number (Masked)</span>
+          </label>
+          <label class="flex items-center gap-1.5 cursor-pointer text-slate-200 ml-2">
+            <input type="radio" id="autoRadioSim" name="autoCallerMode" value="user-sim" onchange="toggleAutoCallCallerMode('user-sim')" class="accent-emerald-500">
+            <span class="text-emerald-300 font-medium">My Phone (+91 8518900153)</span>
+          </label>
+        </div>
+        <div id="botSpeakingWave" class="flex items-center gap-1.5">
+          <span class="w-1 h-3 bg-purple-400 rounded-full animate-pulse"></span>
+          <span class="w-1 h-5 bg-amber-400 rounded-full animate-bounce"></span>
+          <span class="w-1 h-6 bg-indigo-400 rounded-full animate-pulse"></span>
+          <span class="w-1 h-4 bg-emerald-400 rounded-full animate-bounce"></span>
+          <span class="w-1 h-2 bg-purple-400 rounded-full animate-pulse"></span>
+          <span id="botSpeakingStatusLabel" class="text-[11px] text-purple-300 font-semibold ml-1.5">Bot Speaks Directly</span>
         </div>
       </div>
 

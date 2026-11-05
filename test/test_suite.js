@@ -445,6 +445,22 @@ async function runTests() {
     assert.ok(saved, 'Lead should exist in database');
   });
 
+  // TEST 25: AI Voice Bot with Unknown Number and Speech Synthesis
+  await test('Requirement: AI Voice Bot can call from Unknown Number with caller ID masking and spoken voice script', () => {
+    const dms = dmService.getAll();
+    const autoCall = callingService.initiateAutomatedAiCall({
+      decisionMakerId: dms[0].id,
+      callerIdMode: 'unknown'
+    });
+
+    assert.strictEqual(autoCall.isUnknownNumber, true);
+    assert.strictEqual(autoCall.callerNumber, 'Private / Unknown Number');
+    assert.ok(autoCall.callerName.toLowerCase().includes('private') || autoCall.callerName.toLowerCase().includes('unknown'));
+    assert.strictEqual(autoCall.botCanSpeak, true);
+    assert.ok(autoCall.dialogTurns.length >= 4);
+    assert.ok(autoCall.dialogTurns.every(t => t.speechSynthesizerConfig && t.speechSynthesizerConfig.lang === 'en-IN'));
+  });
+
   console.log(`\n========================================`);
   console.log(`Total tests: ${passed + failed}`);
   console.log(`Passed: ${passed}`);

@@ -78,8 +78,8 @@ class CallingService {
     };
   }
 
-  // Initiate a call session from user's number 8518900153 to decision-maker
-  initiateCallSession({ decisionMakerId, customPhone, callMode = 'device-dialer' }) {
+  // Initiate a call session (supports User SIM 8518900153 or Unknown / Masked Caller ID)
+  initiateCallSession({ decisionMakerId, customPhone, callMode = 'device-dialer', callerIdMode = 'user-sim' }) {
     const caller = this.getCallerProfile();
     let dm = null;
 
@@ -94,12 +94,14 @@ class CallingService {
     const targetPhone = dm ? dm.phone : customPhone;
     const cleanTargetPhone = targetPhone.replace(/[^0-9]/g, '');
 
-    // Format tel URI for direct dial on device
+    // Format clean phone
     const dialPhoneFormatted = cleanTargetPhone.startsWith('91') || cleanTargetPhone.startsWith('+91')
       ? cleanTargetPhone
       : `91${cleanTargetPhone.slice(-10)}`;
 
-    const telUri = `tel:+${dialPhoneFormatted}`;
+    const isUnknown = callerIdMode === 'unknown';
+    // GSM #31# prefix initiates call with Private / Unknown Caller ID presentation on mobile networks
+    const telUri = isUnknown ? `tel:%2331%23%2B${dialPhoneFormatted}` : `tel:+${dialPhoneFormatted}`;
     const whatsappCallUri = `https://api.whatsapp.com/send?phone=${dialPhoneFormatted}`;
 
     // QR Code to scan with phone camera to instantly trigger the call on mobile
@@ -118,8 +120,10 @@ class CallingService {
 
     const session = {
       sessionId: `call_sess_${Date.now()}`,
-      callerNumber: caller.agentPhone,
-      callerName: caller.agentName,
+      callerNumber: isUnknown ? 'Private / Unknown Number' : caller.agentPhone,
+      callerName: isUnknown ? 'Unknown Caller (Private Line)' : caller.agentName,
+      callerIdMode: isUnknown ? 'unknown' : 'user-sim',
+      isUnknownNumber: isUnknown,
       targetNumber: targetPhone,
       targetCleanPhone: dialPhoneFormatted,
       targetName: dm ? dm.fullName : 'Prospect',
@@ -186,8 +190,8 @@ class CallingService {
   // FULLY AUTOMATED AI CALLING BOT ENGINE
   // ==========================================
 
-  // Initiate an autonomous voice call session
-  initiateAutomatedAiCall({ decisionMakerId, customPhone }) {
+  // Initiate an autonomous voice call session (supports User SIM 8518900153 or Unknown / Masked Caller ID)
+  initiateAutomatedAiCall({ decisionMakerId, customPhone, callerIdMode = 'user-sim' }) {
     const caller = this.getCallerProfile();
     const refConfig = referralService.getReferralConfig();
     let dm = null;
@@ -200,6 +204,7 @@ class CallingService {
       throw new Error('A valid decision-maker or phone number is required for automated calling.');
     }
 
+    const isUnknown = callerIdMode === 'unknown';
     const targetName = dm ? dm.fullName : 'Business Leader';
     const targetCompany = dm ? dm.companyName : 'Your Company';
     const targetDesignation = dm ? dm.designation : 'Executive';
@@ -212,39 +217,45 @@ class CallingService {
         title: 'Greeting & Verification',
         botAudioText: `Hello ${targetName}! This is the Go Extra Mile partner merchant desk calling on behalf of ${caller.agentName}. Am I speaking with the ${targetDesignation} of ${targetCompany}?`,
         expectedProspectResponse: 'Yes, speaking / Who is this?',
-        botResponse: `Great to connect with you, ${targetName}! I will keep this brief.`
+        botResponse: `Great to connect with you, ${targetName}! I will keep this brief.`,
+        speechSynthesizerConfig: { lang: 'en-IN', rate: 0.95, pitch: 1.02 }
       },
       {
         step: 2,
         title: 'Core Go Extra Mile Pitch',
         botAudioText: `Go Extra Mile connects leading brands with thousands of active buyers looking for exclusive deals, product discounts, and promotional offers. We are currently listing premier brands with zero upfront friction, giving you complete autonomy over your deal margins and campaign duration.`,
         expectedProspectResponse: 'What are the listing fees or terms?',
-        botResponse: `There are absolutely zero upfront listing fees. You retain complete control over your product listings, discounts, and campaign duration.`
+        botResponse: `There are absolutely zero upfront listing fees. You retain complete control over your product listings, discounts, and campaign duration.`,
+        speechSynthesizerConfig: { lang: 'en-IN', rate: 0.95, pitch: 1.02 }
       },
       {
         step: 3,
         title: 'Offer Listing Proposition',
         botAudioText: `Would you be open to featuring ${targetCompany}'s exclusive products or special discount packages on our platform to drive immediate sales and customer acquisition?`,
         expectedProspectResponse: 'Yes, tell me more / Send details.',
-        botResponse: `Wonderful! We would love to feature ${targetCompany}.`
+        botResponse: `Wonderful! We would love to feature ${targetCompany}.`,
+        speechSynthesizerConfig: { lang: 'en-IN', rate: 0.95, pitch: 1.02 }
       },
       {
         step: 4,
         title: 'Consent & Referral Link Handshake',
         botAudioText: `May I send our official merchant onboarding portal link directly to your WhatsApp at ${targetPhone} so you can review onboarding details and list your brand offers?`,
         expectedProspectResponse: 'Yes, send it on WhatsApp.',
-        botResponse: `Sending it right now! Your official partner link is https://www.goextramile.in/r?code=GOMILES with partner code GOMILES. Thank you, ${targetName}!`
+        botResponse: `Sending it right now! Your official partner link is https://www.goextramile.in/r?code=GOMILES with partner code GOMILES. Thank you, ${targetName}!`,
+        speechSynthesizerConfig: { lang: 'en-IN', rate: 0.95, pitch: 1.02 }
       },
       {
         step: 5,
         title: 'Email Proposal & Campaign Guidelines',
         botAudioText: `I can also email our complete merchant onboarding deck and referral link directly to your email, detailing how to run ${targetCompany}'s deals and exclusive offers on the Go Extra Mile app.`,
         expectedProspectResponse: 'Yes, email the campaign proposal.',
-        botResponse: `Perfect! I am dispatching the full merchant proposal and link https://www.goextramile.in/r?code=GOMILES to your email right away!`
+        botResponse: `Perfect! I am dispatching the full merchant proposal and link https://www.goextramile.in/r?code=GOMILES to your email right away!`,
+        speechSynthesizerConfig: { lang: 'en-IN', rate: 0.95, pitch: 1.02 }
       }
     ];
 
     // Formulate TwiML XML response for Twilio Voice Telephony
+    const callerIdTwiml = isUnknown ? 'callerId="RESTRICTED"' : `callerId="${caller.agentPhone}"`;
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Say voice="Polly.Aditi" language="en-IN">Hello ${targetName}! This is the Go Extra Mile merchant onboarding desk calling on behalf of ${caller.agentName}. We are offering ${targetCompany} an exclusive opportunity to list your products and promotional discounts on the Go Extra Mile app with zero listing fees.</Say>
@@ -258,6 +269,7 @@ class CallingService {
     const aiAgentConfig = {
       model: 'gpt-4o-mini',
       voice: 'en-IN-Standard-A',
+      callerId: isUnknown ? 'anonymous' : caller.agentPhone,
       firstMessage: `Hello ${targetName}! This is the Go Extra Mile merchant desk calling on behalf of ${caller.agentName}. Am I speaking with the ${targetDesignation} of ${targetCompany}?`,
       systemPrompt: `You are an AI sales representative calling for Go Extra Mile (https://www.goextramile.in/r?code=GOMILES).
 Your goal is to convince ${targetName}, ${targetDesignation} of ${targetCompany}, to list their products, exclusive offers, discounts, and promotional deals on Go Extra Mile.
@@ -272,8 +284,11 @@ Always ask for explicit consent before sending the onboarding link to WhatsApp.`
     return {
       callId: `auto_call_${Date.now()}`,
       status: 'In Progress',
-      callerNumber: caller.agentPhone,
-      callerName: caller.agentName,
+      callerIdMode: isUnknown ? 'unknown' : 'user-sim',
+      callerNumber: isUnknown ? 'Private / Unknown Number' : caller.agentPhone,
+      callerName: isUnknown ? 'Private Caller ID (Masked Cloud PBX)' : caller.agentName,
+      isUnknownNumber: isUnknown,
+      privacyHeader: isUnknown ? 'Privacy: id; Privacy-Full' : 'none',
       targetNumber: targetPhone,
       targetEmail: dm ? dm.email : null,
       targetName,
@@ -286,6 +301,8 @@ Always ask for explicit consent before sending the onboarding link to WhatsApp.`
       dialogTurns,
       twiml,
       aiAgentConfig,
+      botCanSpeak: true,
+      audioVoice: 'Polly.Aditi (en-IN)',
       startedAt: new Date().toISOString()
     };
   }
