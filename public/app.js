@@ -1303,8 +1303,16 @@ function renderActiveCallModal(sess) {
   document.getElementById('activeCallTargetPhone').innerText = sess.targetNumber;
 
   // Direct Dial Links
-  document.getElementById('btnDirectDialTel').href = sess.dialTelUri;
-  document.getElementById('btnDirectDialWhatsApp').href = sess.whatsappDialUri;
+  const dialBtn = document.getElementById('btnDirectDialTel');
+  if (dialBtn) {
+    dialBtn.href = sess.dialTelUri;
+    dialBtn.innerHTML = `<i class="fa-solid fa-phone-volume text-yellow-300"></i> Call Customer (${sess.targetNumber})`;
+  }
+  const waBtn = document.getElementById('btnDirectDialWhatsApp');
+  if (waBtn) {
+    waBtn.href = sess.whatsappDialUri;
+    waBtn.innerHTML = `<i class="fa-brands fa-whatsapp text-emerald-400"></i> WhatsApp Customer`;
+  }
 
   // Set QR Code for Instant Phone Camera Dialing
   const qrImg = document.getElementById('qrDialImage');
@@ -2139,6 +2147,23 @@ function handleUserVoiceInput(spokenText) {
       speakBotText(response);
     }, 800);
   }
+}
+
+// Directly dial customer's phone from call bot dialog
+function callCustomerDirectFromBotModal() {
+  if (!activeAutoCallData || !activeAutoCallData.targetNumber) {
+    showToast('Customer phone number not available', 'error');
+    return;
+  }
+  const cleanNum = (activeAutoCallData.targetNumber || '').replace(/[^0-9]/g, '');
+  const dialNum = cleanNum.startsWith('91') && cleanNum.length === 12
+    ? cleanNum
+    : cleanNum.length === 10
+    ? `91${cleanNum}`
+    : cleanNum;
+
+  showToast(`📞 Dialing ${activeAutoCallData.targetName} (+${dialNum}) directly on your phone dialer...`, 'success');
+  window.location.href = `tel:+${dialNum}`;
 }
 
 async function dispatchBotReferralWhatsApp() {

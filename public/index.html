@@ -1490,7 +1490,10 @@
 
         <div class="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-800">
           <div class="flex flex-wrap items-center gap-2">
-            <button onclick="dispatchBotReferralWhatsApp()" id="btnAutoSendReferral" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow-lg shadow-emerald-600/20">
+            <button onclick="callCustomerDirectFromBotModal()" id="btnAutoDirectDialCustomer" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow-lg shadow-emerald-600/20" title="Directly dial customer's phone from your SIM / device">
+              <i class="fa-solid fa-phone-volume text-yellow-300"></i> Dial Customer Now (SIM)
+            </button>
+            <button onclick="dispatchBotReferralWhatsApp()" id="btnAutoSendReferral" class="bg-emerald-700/80 hover:bg-emerald-600 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow-lg shadow-emerald-700/20">
               <i class="fa-brands fa-whatsapp text-sm"></i> Send Notes & Link to WhatsApp
             </button>
             <button onclick="dispatchBotReferralEmail()" id="btnAutoSendEmail" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow-lg shadow-indigo-600/20">
