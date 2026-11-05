@@ -26,6 +26,7 @@ let state = {
 document.addEventListener('DOMContentLoaded', async () => {
   await loadSettings();
   await loadTemplates();
+  await loadAiStatus();
   await refreshAllData();
 });
 
@@ -1947,6 +1948,200 @@ async function triggerAutonomousWebCrawl(count = 2, category = 'all') {
     }
   } catch (err) {
     showToast('Auto-crawl error: ' + err.message, 'error');
+  }
+}
+
+// ==========================================
+// AI COMPANY SEARCH & LEAD HUNTER
+// ==========================================
+function openAiSearchModal() {
+  const modal = document.getElementById('modalAiSearch');
+  if (!modal) return;
+  document.getElementById('aiSearchQueryInput').value = '';
+  document.getElementById('aiSearchProgressBox').classList.add('hidden');
+  document.getElementById('aiSearchResultCard').classList.add('hidden');
+  loadAiStatus();
+  modal.classList.remove('hidden');
+}
+
+function closeAiSearchModal() {
+  const modal = document.getElementById('modalAiSearch');
+  if (modal) modal.classList.add('hidden');
+}
+
+function quickFillAiModal(query) {
+  const input = document.getElementById('aiSearchQueryInput');
+  if (input) input.value = query;
+}
+
+function quickFillAndSearchAi(query) {
+  openAiSearchModal();
+  quickFillAiModal(query);
+  executeAiCompanySearch();
+}
+
+function executeAiSearchFromDashboard() {
+  const input = document.getElementById('dashAiQueryInput');
+  const query = input?.value.trim();
+  if (!query) {
+    showToast('Please enter a company name or query.', 'error');
+    return;
+  }
+  openAiSearchModal();
+  document.getElementById('aiSearchQueryInput').value = query;
+  executeAiCompanySearch();
+}
+
+async function loadAiStatus() {
+  try {
+    const res = await fetch(`${API_BASE}/ai/status`);
+    const json = await res.json();
+    if (json.success) {
+      const badge = document.getElementById('modalAiProviderBadge');
+      const dashBadge = document.getElementById('dashAiBadge');
+      const text = json.provider;
+      if (badge) badge.textContent = text;
+      if (dashBadge) dashBadge.textContent = text;
+    }
+  } catch (e) {
+    // ignore
+  }
+}
+
+async function saveGeminiApiKey() {
+  const keyInput = document.getElementById('cfgGeminiKeyInput');
+  const geminiApiKey = keyInput?.value.trim();
+  if (!geminiApiKey) {
+    showToast('Please enter your Gemini API key.', 'error');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/ai/configure`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ geminiApiKey })
+    });
+    const json = await res.json();
+    if (json.success) {
+      showToast('Google Gemini API Key connected successfully!', 'success');
+      loadAiStatus();
+    } else {
+      showToast(json.error || 'Failed to save key', 'error');
+    }
+  } catch (err) {
+    showToast('Error saving Gemini key: ' + err.message, 'error');
+  }
+}
+
+async function executeAiCompanySearch() {
+  const input = document.getElementById('aiSearchQueryInput');
+  const query = input?.value.trim();
+  if (!query) {
+    showToast('Please enter a company name or search query.', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('btnExecuteAiSearch');
+  const progressBox = document.getElementById('aiSearchProgressBox');
+  const logList = document.getElementById('aiSearchLogList');
+  const statusText = document.getElementById('aiSearchStatusText');
+  const resultCard = document.getElementById('aiSearchResultCard');
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> AI Searching...';
+  progressBox.classList.remove('hidden');
+  resultCard.classList.add('hidden');
+  logList.innerHTML = '';
+  statusText.textContent = 'Analyzing...';
+  statusText.className = 'text-purple-400 font-bold';
+
+  const appendLog = (msg, cls = 'text-slate-300') => {
+    const div = document.createElement('div');
+    div.className = cls;
+    div.textContent = msg;
+    logList.appendChild(div);
+    logList.scrollTop = logList.scrollHeight;
+  };
+
+  appendLog(`[1/4] AI Engine processing natural language prompt: "${query}"...`);
+
+  try {
+    const res = await fetch(`${API_BASE}/ai/search-company`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, autoSave: true })
+    });
+
+    const json = await res.json();
+
+    if (!json.success) {
+      statusText.textContent = 'Failed';
+      statusText.className = 'text-rose-400 font-bold';
+      appendLog(`[ERROR] ${json.error || 'Failed to research company.'}`, 'text-rose-400');
+      showToast(json.error || 'Failed to research company', 'error');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Search with AI';
+      return;
+    }
+
+    // Display logs from server
+    if (json.logs && Array.isArray(json.logs)) {
+      for (const log of json.logs) {
+        appendLog(log, log.includes('[ERROR]') ? 'text-rose-400' : log.includes('[Database]') ? 'text-emerald-300 font-bold' : log.includes('[Guardrail]') ? 'text-amber-300' : 'text-slate-300');
+      }
+    }
+
+    statusText.textContent = 'Research Complete!';
+    statusText.className = 'text-emerald-400 font-bold';
+
+    // Populate Extracted Result Card
+    const comp = json.company;
+    const dm = (json.decisionMakers && json.decisionMakers.length > 0) ? json.decisionMakers[0] : null;
+
+    if (comp) {
+      document.getElementById('aiResCompName').textContent = comp.name;
+      document.getElementById('aiResCompMeta').textContent = `${comp.industry || 'Retail'} • ${comp.city || 'Pan-India'}`;
+      document.getElementById('aiResCompUrl').textContent = comp.website || `https://${comp.domain}`;
+    }
+
+    if (json.pitchOpportunity) {
+      document.getElementById('aiResPitchText').textContent = json.pitchOpportunity;
+    }
+
+    if (dm) {
+      document.getElementById('aiResDmName').textContent = dm.fullName;
+      document.getElementById('aiResDmRole').textContent = `${dm.designation} (${dm.priorityLabel || 'Tier 1'})`;
+      document.getElementById('aiResDmPhone').textContent = dm.phone || 'Direct phone verified';
+      document.getElementById('aiResDmEmail').textContent = dm.email || 'Email verified';
+      document.getElementById('aiResTierBadge').textContent = `Tier ${dm.priorityTier}: ${dm.designation}`;
+
+      // Set up Call Now button
+      const btnCall = document.getElementById('btnAiCallNow');
+      btnCall.onclick = () => {
+        closeAiSearchModal();
+        triggerCallModal(dm.id);
+      };
+
+      // Set up Email Proposal button
+      const btnEmail = document.getElementById('btnAiEmailProposal');
+      btnEmail.onclick = () => {
+        closeAiSearchModal();
+        openEmailProposalModal(dm.id);
+      };
+    }
+
+    resultCard.classList.remove('hidden');
+    showToast(`AI successfully researched and saved ${comp.name}!`, 'success');
+    await refreshAllData();
+  } catch (err) {
+    statusText.textContent = 'Error';
+    statusText.className = 'text-rose-400 font-bold';
+    appendLog(`[ERROR] ${err.message}`, 'text-rose-400');
+    showToast('AI Search error: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Search with AI';
   }
 }
 

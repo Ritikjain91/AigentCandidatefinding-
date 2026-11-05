@@ -5,15 +5,16 @@ const referralService = require('../src/services/referralService');
 const researchService = require('../src/services/researchService');
 const callingService = require('../src/services/callingService');
 const websiteFetcher = require('../src/services/websiteFetcherService');
+const aiSearchService = require('../src/services/aiCompanySearchService');
 
 async function runTests() {
   console.log('🧪 Starting AutomaticCallingBot Test Suite...\n');
   let passed = 0;
   let failed = 0;
 
-  function test(name, fn) {
+  async function test(name, fn) {
     try {
-      fn();
+      await fn();
       console.log(`  ✅ PASS: ${name}`);
       passed++;
     } catch (err) {
@@ -373,7 +374,7 @@ async function runTests() {
   });
 
   // TEST 20: End-to-End Automatic Website Fetch and Lead Generation Pipeline
-  test('Requirement: Automatically fetches website and creates company & verified decision-maker in database', async () => {
+  await test('Requirement: Automatically fetches website and creates company & verified decision-maker in database', async () => {
     const result = await websiteFetcher.fetchWebsiteAndGenerateLead('https://bluetokaicoffee.com', { autoSave: true });
     assert.strictEqual(result.success, true);
     assert.ok(result.company);
@@ -391,12 +392,57 @@ async function runTests() {
   });
 
   // TEST 21: Autonomous Web Directory Lead Generator
-  test('Requirement: Autonomous web directory generator creates merchant leads for Go Extra Mile acquisition', async () => {
+  await test('Requirement: Autonomous web directory generator creates merchant leads for Go Extra Mile acquisition', async () => {
     const leads = await websiteFetcher.autoDiscoverFromWebDirectory(1, 'all');
     assert.strictEqual(leads.length, 1);
     assert.strictEqual(leads[0].success, true);
     assert.ok(leads[0].company.name);
     assert.ok(leads[0].decisionMakers.length > 0);
+  });
+
+  // TEST 22: AI Company Search - Specific Merchant Brand (Lenskart)
+  await test('Requirement: AI searches company "Lenskart", identifies Co-Founder Peyush Bansal as Tier 1, and tailors Go Extra Mile pitch', async () => {
+    const res = await aiSearchService.searchCompany('Lenskart', { autoSave: true });
+    assert.strictEqual(res.success, true);
+    assert.ok(res.company);
+    assert.ok(res.company.name.toLowerCase().includes('lenskart'));
+    assert.strictEqual(res.company.domain, 'lenskart.com');
+    assert.ok(res.decisionMakers.length > 0);
+
+    const founder = res.decisionMakers.find(d => d.fullName.includes('Peyush Bansal'));
+    assert.ok(founder, 'Should find Peyush Bansal');
+    assert.strictEqual(founder.priorityTier, 1);
+    assert.ok(founder.phone.startsWith('+91'));
+    assert.strictEqual(founder.phone.includes('1800'), false);
+    assert.strictEqual(founder.verificationStatus, 'Verified');
+    assert.ok(res.pitchOpportunity.toLowerCase().includes('go extra mile') || res.pitchOpportunity.toLowerCase().includes('discount'));
+  });
+
+  // TEST 23: AI Company Search - Customer-Care Guardrail Verification (boAt Lifestyle)
+  await test('Requirement: AI searches company "boAt Lifestyle", verifies executive coordinates, and strictly rejects customer care', async () => {
+    const res = await aiSearchService.searchCompany('boAt Lifestyle', { autoSave: true });
+    assert.strictEqual(res.success, true);
+    assert.ok(res.decisionMakers.length > 0);
+    for (const dm of res.decisionMakers) {
+      assert.strictEqual(dm.phone.includes('1800'), false);
+      assert.strictEqual(dm.phone.includes('1860'), false);
+      assert.strictEqual(dm.email.includes('support@'), false);
+      assert.strictEqual(dm.email.includes('care@'), false);
+      assert.strictEqual(dm.isCustomerSupport, false);
+    }
+  });
+
+  // TEST 24: AI Company Search - Dynamic Natural Language Query
+  await test('Requirement: AI searches dynamic prompt "Search company Saffron Splendor Retail in Jaipur", creates Tier 1 lead in database', async () => {
+    const res = await aiSearchService.searchCompany('Search company Saffron Splendor Retail in Jaipur', { autoSave: true });
+    assert.strictEqual(res.success, true);
+    assert.ok(res.company.name.includes('Saffron Splendor'));
+    assert.strictEqual(res.company.city, 'Jaipur');
+    assert.ok(res.decisionMakers.length > 0);
+    assert.strictEqual(res.decisionMakers[0].priorityTier, 1);
+
+    const saved = storage.getDecisionMakers().find(d => d.fullName === res.decisionMakers[0].fullName);
+    assert.ok(saved, 'Lead should exist in database');
   });
 
   console.log(`\n========================================`);

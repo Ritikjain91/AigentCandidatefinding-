@@ -78,6 +78,9 @@
         <button onclick="openFetchWebsiteModal()" class="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 text-slate-950 font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-md shadow-amber-500/20 ml-2">
           <i class="fa-solid fa-globe"></i> <span class="hidden md:inline">Auto-Fetch Website</span>
         </button>
+        <button onclick="openAiSearchModal()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-md shadow-purple-500/20 ml-1.5">
+          <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i> <span class="hidden md:inline">AI Search Company</span>
+        </button>
       </nav>
     </div>
   </header>
@@ -164,41 +167,50 @@
         </div>
       </div>
 
-      <!-- INSTANT WEBSITE LEAD GENERATOR TOOLBAR -->
-      <div class="bg-gradient-to-r from-slate-900 via-indigo-950/60 to-slate-900 border border-indigo-500/30 rounded-2xl p-5 shadow-lg space-y-3">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <!-- AI COMPANY SEARCH & WEBSITE CRAWLER HERO ENGINE -->
+      <div class="bg-gradient-to-r from-slate-900 via-indigo-950/70 to-slate-900 border border-purple-500/30 rounded-2xl p-5 shadow-xl space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
           <div class="space-y-1">
             <div class="flex items-center gap-2">
-              <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-purple-400 animate-pulse"></span>
               <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                <i class="fa-solid fa-bolt text-amber-400"></i> Instant Website Lead Fetcher
+                <i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i> AI Company Search & Autonomous Lead Discovery
               </h3>
-              <span class="text-[10px] bg-emerald-500/20 text-emerald-300 font-semibold px-2 py-0.5 rounded border border-emerald-500/30">Auto-Extract & Save</span>
+              <span id="dashAiBadge" class="text-[10px] bg-purple-500/20 text-purple-300 font-semibold px-2 py-0.5 rounded border border-purple-500/30">AI Active</span>
             </div>
-            <p class="text-xs text-slate-300">Enter any merchant website URL. The AI web crawler automatically fetches company details, crawls leadership pages, and generates verified decision-makers.</p>
+            <p class="text-xs text-slate-300">Search any company name or query (e.g. <em>"Lenskart"</em>, <em>"boAt Lifestyle"</em>, <em>"Haldiram's"</em>, or <em>"Top fashion brands in Mumbai"</em>). The AI identifies the business, discovers verified decision-makers, and tailors the Go Extra Mile merchant pitch.</p>
           </div>
-          <button onclick="triggerAutonomousWebCrawl(2)" class="bg-indigo-600/80 hover:bg-indigo-600 text-white font-semibold text-xs px-3.5 py-2 rounded-lg border border-indigo-400/30 transition flex items-center gap-2 shadow shrink-0">
-            <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i> Auto-Crawl 2 Web Merchants
-          </button>
+          <div class="flex items-center gap-2 shrink-0">
+            <button onclick="openAiSearchModal()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow-md shadow-purple-500/20">
+              <i class="fa-solid fa-brain"></i> AI Research Terminal
+            </button>
+            <button onclick="openFetchWebsiteModal()" class="bg-slate-800 hover:bg-slate-700 text-amber-300 font-semibold text-xs px-3.5 py-2 rounded-lg border border-amber-500/30 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-globe"></i> Website URL Mode
+            </button>
+          </div>
         </div>
 
+        <!-- Search Input Bar -->
         <div class="flex flex-col sm:flex-row gap-2">
           <div class="relative flex-1">
-            <i class="fa-solid fa-globe absolute left-3 top-3 text-slate-400 text-xs"></i>
-            <input type="text" id="dashQuickWebUrl" placeholder="Enter website address (e.g. chaipoint.com, fabindia.com, or https://...)" class="w-full bg-slate-950 border border-slate-700 text-xs rounded-xl pl-8 pr-3 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-purple-400 text-xs"></i>
+            <input type="text" id="dashAiQueryInput" onkeydown="if(event.key==='Enter') executeAiSearchFromDashboard()" placeholder="Ask AI to search any company (e.g. Lenskart, boAt Lifestyle, Mamaearth, or 'Organic tea brands')..." class="w-full bg-slate-950 border border-slate-700 text-xs rounded-xl pl-9 pr-3 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-purple-500 font-medium">
           </div>
-          <button onclick="quickFetchFromDashboard()" class="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 text-slate-950 font-bold text-xs px-5 py-2.5 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 shrink-0">
-            <i class="fa-solid fa-bolt"></i> Fetch & Generate Lead
+          <button onclick="executeAiSearchFromDashboard()" id="btnDashAiSearch" class="bg-gradient-to-r from-purple-600 via-indigo-600 to-amber-500 hover:from-purple-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-purple-600/20 shrink-0">
+            <i class="fa-solid fa-robot"></i> AI Search Company
           </button>
         </div>
 
         <!-- Quick click suggestions -->
-        <div class="flex flex-wrap items-center gap-1.5 text-xs pt-1">
-          <span class="text-slate-400 text-[11px]">Instant Examples:</span>
-          <button type="button" onclick="quickFillAndFetch('chaipoint.com')" class="text-slate-300 hover:text-amber-300 text-[11px] bg-slate-800/80 hover:bg-slate-700 px-2.5 py-0.5 rounded border border-slate-700 transition">chaipoint.com</button>
-          <button type="button" onclick="quickFillAndFetch('bombayshirts.com')" class="text-slate-300 hover:text-amber-300 text-[11px] bg-slate-800/80 hover:bg-slate-700 px-2.5 py-0.5 rounded border border-slate-700 transition">bombayshirts.com</button>
-          <button type="button" onclick="quickFillAndFetch('kamaayurveda.in')" class="text-slate-300 hover:text-amber-300 text-[11px] bg-slate-800/80 hover:bg-slate-700 px-2.5 py-0.5 rounded border border-slate-700 transition">kamaayurveda.in</button>
-          <button type="button" onclick="quickFillAndFetch('bluetokaicoffee.com')" class="text-slate-300 hover:text-amber-300 text-[11px] bg-slate-800/80 hover:bg-slate-700 px-2.5 py-0.5 rounded border border-slate-700 transition">bluetokaicoffee.com</button>
+        <div class="flex flex-wrap items-center gap-1.5 text-xs pt-0.5">
+          <span class="text-slate-400 text-[11px]"><i class="fa-solid fa-sparkles text-purple-400"></i> Trending AI Targets:</span>
+          <button type="button" onclick="quickFillAndSearchAi('Lenskart')" class="text-slate-300 hover:text-purple-300 text-[11px] bg-slate-800/80 hover:bg-slate-700 px-2.5 py-0.5 rounded border border-slate-700 transition">Lenskart</button>
+          <button type="button" onclick="quickFillAndSearchAi('boAt Lifestyle')" class="text-slate-300 hover:text-purple-300 text-[11px] bg-slate-800/80 hover:bg-slate-700 px-2.5 py-0.5 rounded border border-slate-700 transition">boAt Lifestyle</button>
+          <button type="button" onclick="quickFillAndSearchAi('Mamaearth')" class="text-slate-300 hover:text-purple-300 text-[11px] bg-slate-800/80 hover:bg-slate-700 px-2.5 py-0.5 rounded border border-slate-700 transition">Mamaearth</button>
+          <button type="button" onclick="quickFillAndSearchAi('Chaayos')" class="text-slate-300 hover:text-purple-300 text-[11px] bg-slate-800/80 hover:bg-slate-700 px-2.5 py-0.5 rounded border border-slate-700 transition">Chaayos</button>
+          <button type="button" onclick="quickFillAndSearchAi('Haldiram\'s')" class="text-slate-300 hover:text-purple-300 text-[11px] bg-slate-800/80 hover:bg-slate-700 px-2.5 py-0.5 rounded border border-slate-700 transition">Haldiram's</button>
+          <button type="button" onclick="quickFillAndSearchAi('SUGAR Cosmetics')" class="text-slate-300 hover:text-purple-300 text-[11px] bg-slate-800/80 hover:bg-slate-700 px-2.5 py-0.5 rounded border border-slate-700 transition">SUGAR Cosmetics</button>
+          <button type="button" onclick="quickFillAndSearchAi('Blue Tokai Coffee Roasters')" class="text-slate-300 hover:text-purple-300 text-[11px] bg-slate-800/80 hover:bg-slate-700 px-2.5 py-0.5 rounded border border-slate-700 transition">Blue Tokai</button>
         </div>
       </div>
 
@@ -344,6 +356,9 @@
           <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold" title="Self-replenishing pipeline: Deleting a contact automatically searches & generates a fresh decision-maker">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Auto-Replenish: ACTIVE
           </span>
+          <button onclick="openAiSearchModal()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i> AI Search Company
+          </button>
           <button onclick="openFetchWebsiteModal()" class="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 text-slate-950 font-bold text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow">
             <i class="fa-solid fa-globe"></i> Auto-Fetch From Website
           </button>
@@ -433,9 +448,14 @@
             </h3>
             <p class="text-xs text-slate-300">Give any business website. The bot directly fetches the page, parses schema, explores leadership / about pages, and generates ready-to-call merchant leads.</p>
           </div>
-          <button onclick="openFetchWebsiteModal()" class="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-lg transition flex items-center gap-2 shadow-lg shadow-amber-500/20 shrink-0">
-            <i class="fa-solid fa-bolt"></i> Open Website Extractor
-          </button>
+          <div class="flex items-center gap-2 shrink-0">
+            <button onclick="openAiSearchModal()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 text-white font-bold text-xs px-4 py-2 rounded-lg transition flex items-center gap-2 shadow-lg shadow-purple-600/20">
+              <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i> AI Search Company
+            </button>
+            <button onclick="openFetchWebsiteModal()" class="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-lg transition flex items-center gap-2 shadow-lg shadow-amber-500/20">
+              <i class="fa-solid fa-bolt"></i> Open Website Extractor
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1415,6 +1435,133 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: AI COMPANY SEARCH ================= -->
+  <div id="modalAiSearch" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 animate-in fade-in duration-200">
+      <div class="flex items-center justify-between border-b border-slate-700/80 pb-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-purple-500/20">
+            <i class="fa-solid fa-brain"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              AI Company Search & Lead Hunter
+              <span id="modalAiProviderBadge" class="text-[10px] bg-purple-500/20 text-purple-300 font-semibold px-2 py-0.5 rounded border border-purple-500/30">Autonomous AI Active</span>
+            </h3>
+            <p class="text-xs text-slate-400">Search any company by name, brand, or natural language prompt. AI extracts decision-makers and Go Extra Mile merchant pitch angles.</p>
+          </div>
+        </div>
+        <button onclick="closeAiSearchModal()" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <!-- Input Bar -->
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Company Name, Brand, or Search Query *</label>
+          <div class="flex gap-2">
+            <div class="relative flex-1">
+              <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-purple-400 text-xs"></i>
+              <input type="text" id="aiSearchQueryInput" onkeydown="if(event.key==='Enter') executeAiCompanySearch()" placeholder="e.g. Lenskart, boAt Lifestyle, Haldiram's, or 'D2C fashion brands in Mumbai'" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg pl-8 pr-3 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-purple-500 font-medium">
+            </div>
+            <button onclick="executeAiCompanySearch()" id="btnExecuteAiSearch" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 text-white font-bold text-xs px-5 py-2.5 rounded-lg transition flex items-center gap-2 shadow-lg shadow-purple-600/20 shrink-0">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Search with AI
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick AI Suggestions -->
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+          <span class="text-slate-400 text-[11px]"><i class="fa-solid fa-lightbulb text-amber-400"></i> Popular Merchant Brands:</span>
+          <button type="button" onclick="quickFillAiModal('Lenskart')" class="bg-slate-900 hover:bg-slate-700 text-slate-300 text-[11px] px-2.5 py-1 rounded-md border border-slate-700 transition">Lenskart</button>
+          <button type="button" onclick="quickFillAiModal('boAt Lifestyle')" class="bg-slate-900 hover:bg-slate-700 text-slate-300 text-[11px] px-2.5 py-1 rounded-md border border-slate-700 transition">boAt Lifestyle</button>
+          <button type="button" onclick="quickFillAiModal('Mamaearth')" class="bg-slate-900 hover:bg-slate-700 text-slate-300 text-[11px] px-2.5 py-1 rounded-md border border-slate-700 transition">Mamaearth</button>
+          <button type="button" onclick="quickFillAiModal('Chaayos')" class="bg-slate-900 hover:bg-slate-700 text-slate-300 text-[11px] px-2.5 py-1 rounded-md border border-slate-700 transition">Chaayos</button>
+          <button type="button" onclick="quickFillAiModal('Haldiram\'s')" class="bg-slate-900 hover:bg-slate-700 text-slate-300 text-[11px] px-2.5 py-1 rounded-md border border-slate-700 transition">Haldiram's</button>
+          <button type="button" onclick="quickFillAiModal('SUGAR Cosmetics')" class="bg-slate-900 hover:bg-slate-700 text-slate-300 text-[11px] px-2.5 py-1 rounded-md border border-slate-700 transition">SUGAR</button>
+        </div>
+      </div>
+
+      <!-- Live AI Progress Box -->
+      <div id="aiSearchProgressBox" class="hidden bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-2 font-mono text-xs">
+        <div class="flex items-center justify-between text-slate-400 text-[11px] border-b border-slate-800 pb-1.5">
+          <span class="flex items-center gap-1.5 text-purple-300 font-bold">
+            <span class="w-2 h-2 rounded-full bg-purple-400 animate-ping"></span> AI Reasoning & Research Pipeline
+          </span>
+          <span id="aiSearchStatusText" class="text-purple-400">Researching...</span>
+        </div>
+        <div id="aiSearchLogList" class="space-y-1 text-slate-300 max-h-40 overflow-y-auto text-[11px] leading-relaxed">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- AI Search Result Preview Card -->
+      <div id="aiSearchResultCard" class="hidden bg-slate-900/90 border border-purple-500/40 rounded-xl p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-purple-300 uppercase tracking-wider flex items-center gap-1.5">
+            <i class="fa-solid fa-circle-check text-emerald-400"></i> AI Research Complete & Saved to Pipeline!
+          </span>
+          <span id="aiResTierBadge" class="badge-tier-1 text-[10px] font-bold px-2 py-0.5 rounded-full">1st Preference (Tier 1)</span>
+        </div>
+
+        <!-- Pitch Opportunity Callout -->
+        <div class="bg-purple-950/40 border border-purple-500/30 rounded-lg p-2.5 text-xs text-purple-200 flex items-start gap-2">
+          <i class="fa-solid fa-bullseye text-amber-300 mt-0.5 shrink-0"></i>
+          <div>
+            <strong class="text-white">Go Extra Mile Pitch Angle:</strong>
+            <span id="aiResPitchText" class="text-purple-100">Exclusive merchant offer promotion.</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+          <div class="space-y-1">
+            <p class="text-slate-400 text-[11px]">Company Profile</p>
+            <h4 id="aiResCompName" class="text-white font-bold text-sm">Company Name</h4>
+            <p id="aiResCompMeta" class="text-slate-300 text-xs">Industry &bull; City</p>
+            <p id="aiResCompUrl" class="text-indigo-400 font-mono text-[11px] truncate">https://domain.com</p>
+          </div>
+          <div class="space-y-1 border-t md:border-t-0 md:border-l border-slate-800 pt-2 md:pt-0 md:pl-3">
+            <p class="text-slate-400 text-[11px]">Identified Decision-Maker</p>
+            <h4 id="aiResDmName" class="text-amber-200 font-bold text-sm">Executive Name</h4>
+            <p id="aiResDmRole" class="text-slate-300 text-xs">Designation</p>
+            <p id="aiResDmPhone" class="text-emerald-300 font-mono text-xs font-semibold">+91 98000 00000</p>
+            <p id="aiResDmEmail" class="text-slate-400 text-[11px]">email@domain.com</p>
+          </div>
+        </div>
+
+        <div class="pt-2 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2">
+          <div class="text-[11px] text-slate-400 flex items-center gap-1.5">
+            <i class="fa-solid fa-shield-halved text-emerald-400"></i>
+            <span>Customer-Care Guardrail Passed &bull; Caller Line: <strong>+91 8518900153</strong></span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="btnAiCallNow" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow">
+              <i class="fa-solid fa-phone"></i> Call Now
+            </button>
+            <button id="btnAiEmailProposal" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow">
+              <i class="fa-solid fa-paper-plane"></i> Send Proposal Email
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Collapsible Gemini API Key Settings -->
+      <details class="text-xs text-slate-400 border-t border-slate-700/80 pt-2 cursor-pointer">
+        <summary class="font-semibold hover:text-slate-200 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-sliders text-purple-400"></i> Optional: Connect Custom Google Gemini API Key
+        </summary>
+        <div class="mt-2.5 p-3 bg-slate-900 border border-slate-700/60 rounded-xl space-y-2">
+          <p class="text-[11px] text-slate-400">Antigravity uses the built-in Autonomous AI Search Engine by default. You can optionally connect a Gemini API key for live multimodal analysis.</p>
+          <div class="flex gap-2">
+            <input type="password" id="cfgGeminiKeyInput" placeholder="Paste Gemini API Key (AIzaSy...)" class="flex-1 bg-slate-950 border border-slate-700 text-xs rounded-lg px-3 py-1.5 text-slate-200 font-mono focus:outline-none focus:border-purple-500">
+            <button onclick="saveGeminiApiKey()" class="bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs px-3.5 py-1.5 rounded-lg transition shrink-0">
+              Save Key
+            </button>
+          </div>
+        </div>
+      </details>
     </div>
   </div>
 

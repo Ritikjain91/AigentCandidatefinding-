@@ -6,6 +6,7 @@ const researchService = require('../services/researchService');
 const referralService = require('../services/referralService');
 const callingService = require('../services/callingService');
 const websiteFetcher = require('../services/websiteFetcherService');
+const aiSearchService = require('../services/aiCompanySearchService');
 
 // ==========================================
 // SETTINGS & CONFIGURATION
@@ -297,6 +298,60 @@ router.post('/leads/auto-crawl-web', async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ==========================================
+// AI COMPANY SEARCH & RESEARCH ENGINE
+// ==========================================
+
+// Search any company using AI and generate decision-maker lead
+router.post('/ai/search-company', async (req, res) => {
+  try {
+    const { query, autoSave } = req.body;
+    if (!query) {
+      return res.status(400).json({ success: false, error: 'Please enter a company name, brand, or search query.' });
+    }
+    const result = await aiSearchService.searchCompany(query, { autoSave: autoSave !== false });
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// Get AI Search Status & Provider
+router.get('/ai/status', (req, res) => {
+  try {
+    const config = storage.getConfig();
+    const hasKey = !!(process.env.GEMINI_API_KEY || config.aiSettings?.geminiApiKey);
+    res.json({
+      success: true,
+      provider: hasKey ? 'Google Gemini 1.5 Flash' : 'Autonomous AI Search Engine',
+      hasKey,
+      model: hasKey ? 'gemini-1.5-flash' : 'builtin-autonomous-agent'
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Configure AI Engine Key
+router.post('/ai/configure', (req, res) => {
+  try {
+    const { geminiApiKey } = req.body;
+    const updated = storage.updateConfig({
+      aiSettings: {
+        geminiApiKey: (geminiApiKey || '').trim(),
+        provider: geminiApiKey ? 'gemini' : 'autonomous'
+      }
+    });
+    res.json({
+      success: true,
+      message: 'AI Search settings updated.',
+      provider: geminiApiKey ? 'Google Gemini 1.5 Flash' : 'Autonomous AI Search Engine'
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
   }
 });
 
