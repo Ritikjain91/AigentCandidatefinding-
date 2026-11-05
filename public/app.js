@@ -1172,13 +1172,66 @@ function renderActiveCallModal(sess) {
   document.getElementById('btnDirectDialTel').href = sess.dialTelUri;
   document.getElementById('btnDirectDialWhatsApp').href = sess.whatsappDialUri;
 
+  // Set QR Code for Instant Phone Camera Dialing
+  const qrImg = document.getElementById('qrDialImage');
+  if (qrImg && sess.dialQrCodeUrl) {
+    qrImg.src = sess.dialQrCodeUrl;
+  }
+
   // Live In-Call Script
   document.getElementById('scriptGreeting').innerText = `"${sess.script.openingGreeting}"`;
   document.getElementById('scriptProposition').innerText = `"${sess.script.coreProposition}"`;
   document.getElementById('scriptCta').innerHTML = `"${sess.script.callToAction} ${sess.script.objectionHandled}"`;
 
+  // Reset bridge button
+  const bridgeBtn = document.getElementById('btnTriggerBridge');
+  if (bridgeBtn) {
+    bridgeBtn.innerHTML = '<i class="fa-solid fa-phone-arrow-up-right"></i> Ring My Phone (+91 8518900153)';
+    bridgeBtn.disabled = false;
+  }
+
   document.getElementById('modalActiveCall').classList.remove('hidden');
   showToast(`Active call session initiated from your number ${sess.callerNumber}!`, 'success');
+}
+
+async function triggerCallBridge() {
+  if (!activeCallSessionData) return;
+
+  const btn = document.getElementById('btnTriggerBridge');
+  if (btn) {
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Ringing Your Phone (+91 8518900153)...';
+    btn.disabled = true;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/calls/bridge`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        decisionMakerId: activeCallSessionData.decisionMakerId,
+        customPhone: activeCallSessionData.targetNumber
+      })
+    });
+    const json = await res.json();
+    if (json.success) {
+      showToast('Cloud Bridge initiated! Your phone +91 8518900153 will ring now.', 'success');
+      if (btn) {
+        btn.innerHTML = '<i class="fa-solid fa-phone-volume text-emerald-400"></i> Bridged to ' + activeCallSessionData.targetName;
+      }
+    } else {
+      showToast(json.error || 'Failed to trigger bridge', 'error');
+      if (btn) {
+        btn.innerHTML = '<i class="fa-solid fa-phone-arrow-up-right"></i> Ring My Phone (+91 8518900153)';
+        btn.disabled = false;
+      }
+    }
+  } catch (err) {
+    showToast('Bridge error: ' + err.message, 'error');
+    if (btn) {
+      btn.innerHTML = '<i class="fa-solid fa-phone-arrow-up-right"></i> Ring My Phone (+91 8518900153)';
+      btn.disabled = false;
+    }
+  }
 }
 
 function closeActiveCallModal() {

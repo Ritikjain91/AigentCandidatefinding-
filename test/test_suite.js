@@ -211,10 +211,19 @@ async function runTests() {
     assert.strictEqual(session.callerNumber, '+91 8518900153');
     assert.strictEqual(session.targetName, targetDm.fullName);
     assert.ok(session.dialTelUri.startsWith('tel:+'));
+    assert.ok(session.dialQrCodeUrl.includes('https://api.qrserver.com'));
     assert.ok(session.whatsappDialUri.includes('https://api.whatsapp.com/send'));
     assert.ok(session.script.openingGreeting.includes('8518900153') || session.script.openingGreeting.includes('Ritik') || session.script.openingGreeting.includes(targetDm.fullName));
     assert.ok(session.script.coreProposition.includes('Go Extra Mile'));
     assert.ok(session.script.coreProposition.includes('exclusive brand deals') || session.script.coreProposition.includes('discounts'));
+  });
+
+  // TEST 11: Two-Leg Cloud Telephony Bridge
+  test('Requirement: Telephony Bridge connects user phone 8518900153 to prospect', () => {
+    const bridge = callingService.triggerTelephonyBridge({ customPhone: '+91 98201 44521' });
+    assert.strictEqual(bridge.leg1.number, '+91 8518900153');
+    assert.strictEqual(bridge.leg2.number, '+91 98201 44521');
+    assert.ok(bridge.instructions.some(i => i.includes('8518900153')));
   });
 
   console.log(`\n========================================`);

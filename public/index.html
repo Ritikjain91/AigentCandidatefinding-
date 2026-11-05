@@ -923,28 +923,63 @@
         <button onclick="closeActiveCallModal()" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
-      <!-- Prospect Contact Card -->
-      <div class="bg-slate-900/90 border border-slate-700 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div class="space-y-1">
-          <div class="flex items-center gap-2">
-            <h4 id="activeCallTargetName" class="font-bold text-white text-base">Prospect Name</h4>
-            <span id="activeCallTargetTier" class="badge-tier-1 text-[10px] font-bold px-2 py-0.5 rounded-full">1st Preference</span>
+      <!-- Prospect Contact Card & Phone Trigger Options -->
+      <div class="bg-slate-900/90 border border-slate-700 rounded-xl p-4 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <h4 id="activeCallTargetName" class="font-bold text-white text-base">Prospect Name</h4>
+              <span id="activeCallTargetTier" class="badge-tier-1 text-[10px] font-bold px-2 py-0.5 rounded-full">1st Preference</span>
+            </div>
+            <p id="activeCallTargetRole" class="text-xs text-amber-300 font-medium">Managing Director &bull; Company Name</p>
+            <div class="text-xs text-slate-300 font-mono flex items-center gap-2 pt-1">
+              <i class="fa-solid fa-phone text-emerald-400"></i>
+              <span id="activeCallTargetPhone" class="font-bold text-emerald-200">+91 98200 00000</span>
+            </div>
           </div>
-          <p id="activeCallTargetRole" class="text-xs text-amber-300 font-medium">Managing Director &bull; Company Name</p>
-          <div class="text-xs text-slate-300 font-mono flex items-center gap-2 pt-1">
-            <i class="fa-solid fa-phone text-emerald-400"></i>
-            <span id="activeCallTargetPhone" class="font-bold text-emerald-200">+91 98200 00000</span>
+
+          <!-- Direct Dial Links -->
+          <div class="flex flex-col sm:flex-row gap-2">
+            <a id="btnDirectDialTel" href="tel:" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-lg transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20">
+              <i class="fa-solid fa-phone"></i> Dial on Phone (SIM)
+            </a>
+            <a id="btnDirectDialWhatsApp" href="#" target="_blank" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs px-3.5 py-2.5 rounded-lg transition flex items-center justify-center gap-2 border border-slate-700">
+              <i class="fa-brands fa-whatsapp text-emerald-400"></i> WhatsApp
+            </a>
           </div>
         </div>
 
-        <!-- Direct Connect Buttons -->
-        <div class="flex flex-col gap-2 min-w-[190px]">
-          <a id="btnDirectDialTel" href="tel:" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20">
-            <i class="fa-solid fa-phone"></i> Dial on Phone / Device
-          </a>
-          <a id="btnDirectDialWhatsApp" href="#" target="_blank" class="bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold text-xs px-3.5 py-1.5 rounded-lg transition flex items-center justify-center gap-2 border border-slate-600">
-            <i class="fa-brands fa-whatsapp text-emerald-400"></i> Dial via WhatsApp
-          </a>
+        <!-- 3 Ways to Initiate Call Through Your Phone -->
+        <div class="border-t border-slate-800 pt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+          <!-- Option A: Scan QR Code with Phone Camera -->
+          <div class="bg-slate-950/80 border border-emerald-500/30 rounded-lg p-3 flex items-center gap-3">
+            <div class="bg-white p-1 rounded-lg shrink-0 shadow">
+              <img id="qrDialImage" src="" alt="Scan to Call" class="w-20 h-20">
+            </div>
+            <div class="space-y-1">
+              <span class="text-emerald-300 font-bold flex items-center gap-1">
+                <i class="fa-solid fa-qrcode"></i> Scan to Call with Phone
+              </span>
+              <p class="text-[11px] text-slate-400 leading-tight">
+                Point your phone camera at this QR code. Tap prompt to dial directly from your SIM <strong class="text-slate-200">+91 8518900153</strong>.
+              </p>
+            </div>
+          </div>
+
+          <!-- Option B: Cloud Telephony Call-Bridge -->
+          <div class="bg-slate-950/80 border border-indigo-500/30 rounded-lg p-3 flex flex-col justify-between gap-2">
+            <div class="space-y-1">
+              <span class="text-indigo-300 font-bold flex items-center gap-1">
+                <i class="fa-solid fa-tower-broadcast"></i> Cloud Call-Bridge
+              </span>
+              <p class="text-[11px] text-slate-400 leading-tight">
+                Server rings your phone <strong class="text-indigo-200">+91 8518900153</strong> first. When you answer, it dials the prospect and bridges the call.
+              </p>
+            </div>
+            <button onclick="triggerCallBridge()" id="btnTriggerBridge" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-1.5 px-3 rounded text-xs transition flex items-center justify-center gap-1.5 shadow">
+              <i class="fa-solid fa-phone-arrow-up-right"></i> Ring My Phone (+91 8518900153)
+            </button>
+          </div>
         </div>
       </div>
 

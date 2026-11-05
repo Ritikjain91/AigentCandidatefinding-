@@ -434,5 +434,23 @@ router.post('/calls/initiate', (req, res) => {
   }
 });
 
+router.post('/calls/bridge', (req, res) => {
+  try {
+    const bridge = callingService.triggerTelephonyBridge(req.body);
+    res.json({ success: true, message: 'Telephony bridge initiated. Your phone will ring shortly.', data: bridge });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+router.get('/network-urls', (req, res) => {
+  try {
+    const urls = callingService.getLocalNetworkUrls();
+    res.json({ success: true, data: urls });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;
 

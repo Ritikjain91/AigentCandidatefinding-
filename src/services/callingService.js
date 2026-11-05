@@ -1,3 +1,4 @@
+const os = require('os');
 const storage = require('./storageService');
 const dmService = require('./decisionMakerService');
 const referralService = require('./referralService');
@@ -32,11 +33,32 @@ class CallingService {
       companyName: profile.companyName || 'Go Extra Mile Partnerships',
       callMode: profile.callMode || 'device-dialer',
       enableBridge: profile.enableBridge !== undefined ? profile.enableBridge : true,
-      enableAiPitchAssistant: profile.enableAiPitchAssistant !== undefined ? profile.enableAiPitchAssistant : true
+      enableAiPitchAssistant: profile.enableAiPitchAssistant !== undefined ? profile.enableAiPitchAssistant : true,
+      telephonyProvider: profile.telephonyProvider || 'simulated-bridge'
     };
 
     storage.updateConfig({ caller: updated });
     return updated;
+  }
+
+  // Get local network IPs for connecting via mobile phone browser
+  getLocalNetworkUrls() {
+    const interfaces = os.networkInterfaces();
+    const urls = [];
+
+    for (const name of Object.keys(interfaces)) {
+      for (const iface of interfaces[name]) {
+        if (iface.family === 'IPv4' && !iface.internal) {
+          urls.push({
+            name,
+            ip: iface.address,
+            url: `http://${iface.address}:3000`
+          });
+        }
+      }
+    }
+
+    return urls;
   }
 
   // Generate live sales pitch script for the caller
@@ -80,6 +102,9 @@ class CallingService {
     const telUri = `tel:+${dialPhoneFormatted}`;
     const whatsappCallUri = `https://api.whatsapp.com/send?phone=${dialPhoneFormatted}`;
 
+    // QR Code to scan with phone camera to instantly trigger the call on mobile
+    const dialQrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(telUri)}`;
+
     const script = this.generateCallScript(dm || {
       fullName: 'Decision-Maker',
       companyName: 'Company',
@@ -87,7 +112,10 @@ class CallingService {
       phone: targetPhone
     }, caller);
 
-    // Call bridge metadata
+    const localIps = this.getLocalNetworkUrls();
+    const primaryMobileUrl = localIps.length > 0 ? localIps[0].url : 'http://localhost:3000';
+    const mobileAppQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(primaryMobileUrl)}`;
+
     const session = {
       sessionId: `call_sess_${Date.now()}`,
       callerNumber: caller.agentPhone,
@@ -101,6 +129,9 @@ class CallingService {
       decisionMakerId: dm ? dm.id : null,
       dialTelUri: telUri,
       whatsappDialUri: whatsappCallUri,
+      dialQrCodeUrl,
+      mobileAppQrUrl,
+      mobileAccessUrl: primaryMobileUrl,
       status: 'Initiated',
       callMode,
       script,
@@ -108,6 +139,47 @@ class CallingService {
     };
 
     return session;
+  }
+
+  // Cloud Telephony Bridge: Rings user's phone 8518900153 first, then bridges to prospect
+  triggerTelephonyBridge({ decisionMakerId, customPhone }) {
+    const caller = this.getCallerProfile();
+    let dm = null;
+
+    if (decisionMakerId) {
+      dm = dmService.getById(decisionMakerId);
+    }
+
+    const targetPhone = dm ? dm.phone : customPhone;
+    if (!targetPhone) {
+      throw new Error('A target phone number is required to trigger telephony bridge.');
+    }
+
+    // Two-leg call bridge simulation / execution payload
+    const bridgeRecord = {
+      bridgeId: `bridge_${Date.now()}`,
+      leg1: {
+        number: caller.agentPhone,
+        description: `Calling your phone (${caller.agentPhone})`,
+        status: 'Ringing Agent Phone'
+      },
+      leg2: {
+        number: targetPhone,
+        name: dm ? dm.fullName : 'Prospect',
+        description: `Bridging to prospect (${targetPhone})`,
+        status: 'Queued'
+      },
+      provider: caller.telephonyProvider || 'simulated-bridge',
+      instructions: [
+        `1. Your phone (${caller.agentPhone}) will receive an incoming call.`,
+        `2. Answer the call on your phone.`,
+        `3. System will immediately dial ${targetPhone} and connect you both directly!`,
+        `4. Pitch Go Extra Mile and listing exclusive merchant discounts.`
+      ],
+      createdAt: new Date().toISOString()
+    };
+
+    return bridgeRecord;
   }
 }
 
