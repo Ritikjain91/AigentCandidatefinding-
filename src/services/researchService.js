@@ -278,7 +278,7 @@ class ResearchService {
         fullName: `Devendra Singhania`,
         designation: 'Founder & Managing Director',
         phone: '+91 98' + Math.floor(10000000 + Math.random() * 90000000),
-        email: `contact@${randomSec.dom.split('.')[0]}${randSuffix}.in`,
+        email: `devendra@${randomSec.dom.split('.')[0]}${randSuffix}.in`,
         sourceUrl: `https://${randomSec.dom.split('.')[0]}${randSuffix}.in/about`
       };
     }

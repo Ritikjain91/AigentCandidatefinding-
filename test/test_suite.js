@@ -4,6 +4,7 @@ const dmService = require('../src/services/decisionMakerService');
 const referralService = require('../src/services/referralService');
 const researchService = require('../src/services/researchService');
 const callingService = require('../src/services/callingService');
+const websiteFetcher = require('../src/services/websiteFetcherService');
 
 async function runTests() {
   console.log('🧪 Starting AutomaticCallingBot Test Suite...\n');
@@ -313,6 +314,89 @@ async function runTests() {
     // Overall count should remain equal because 1 was deleted and 1 was auto-generated
     const afterDeleteCount = storage.getDecisionMakers().length;
     assert.strictEqual(afterDeleteCount, beforeDeleteCount);
+  });
+
+  // TEST 18: Automatic Website URL Normalization & Metadata Extraction
+  test('Requirement: Automatically normalizes website address and derives company details', () => {
+    const norm = websiteFetcher.normalizeUrl('chaipoint.com');
+    assert.strictEqual(norm.fullUrl, 'https://chaipoint.com/');
+    assert.strictEqual(norm.hostname, 'chaipoint.com');
+
+    const sampleHtml = `
+      <html>
+        <head>
+          <title>Chai Point - India's Largest Chai Brand | Order Online</title>
+          <meta property="og:site_name" content="Chai Point" />
+          <meta name="description" content="Artisanal chai, healthy breakfast snacks, and coffee delivery in Bengaluru, Delhi, Mumbai." />
+        </head>
+        <body>
+          <h1>Welcome to Chai Point</h1>
+        </body>
+      </html>
+    `;
+    const meta = websiteFetcher.parseMetadata(sampleHtml, norm.hostname);
+    assert.strictEqual(meta.siteName, 'Chai Point');
+    assert.ok(meta.description.includes('Bengaluru'));
+
+    const compDetails = websiteFetcher.deriveCompanyDetails(meta, norm);
+    assert.strictEqual(compDetails.companyName, 'Chai Point');
+    assert.strictEqual(compDetails.industry, 'Dining & Bakeries');
+    assert.ok(['Bengaluru', 'Delhi NCR', 'Mumbai'].includes(compDetails.city));
+  });
+
+  // TEST 19: Customer-Care Guardrail on Extracted Website Contacts
+  test('Requirement: Website extractor rejects toll-free customer care (1800/1860) and support emails', () => {
+    const htmlWithSupport = `
+      <div class="footer">
+        <p>Customer Care Helpline: 1800-200-1234, 1860-500-9999</p>
+        <p>Email: care@company.com, support@company.com</p>
+        <div class="leadership">
+          <h3>Rohan Singhania, Founder & CEO</h3>
+          <p>Direct Business Line: +91 98200 44321</p>
+          <p>Executive Office: rohan@company.com</p>
+        </div>
+      </div>
+    `;
+    const dms = websiteFetcher.extractDecisionMakersFromHtml(htmlWithSupport, { domain: 'company.com' }, 'https://company.com');
+    assert.ok(dms.length > 0);
+    const founder = dms[0];
+    assert.strictEqual(founder.fullName, 'Rohan Singhania');
+    assert.strictEqual(founder.priorityTier, 1);
+    // Verified direct business line
+    assert.strictEqual(founder.phone, '+91 98200 44321');
+    assert.strictEqual(founder.email, 'rohan@company.com');
+    // Ensure customer care numbers were filtered out
+    assert.strictEqual(founder.phone.includes('1800'), false);
+    assert.strictEqual(founder.phone.includes('1860'), false);
+    assert.strictEqual(founder.email.includes('support@'), false);
+    assert.strictEqual(founder.email.includes('care@'), false);
+  });
+
+  // TEST 20: End-to-End Automatic Website Fetch and Lead Generation Pipeline
+  test('Requirement: Automatically fetches website and creates company & verified decision-maker in database', async () => {
+    const result = await websiteFetcher.fetchWebsiteAndGenerateLead('https://bluetokaicoffee.com', { autoSave: true });
+    assert.strictEqual(result.success, true);
+    assert.ok(result.company);
+    assert.ok(result.company.name);
+    assert.ok(result.decisionMakers.length > 0);
+    assert.strictEqual(result.decisionMakers[0].priorityTier, 1);
+    assert.strictEqual(result.decisionMakers[0].verificationStatus, 'Verified');
+    assert.ok(result.logs.length >= 4);
+
+    // Verify stored in DB
+    const savedComp = storage.getCompanies().find(c => c.domain.includes('bluetokaicoffee.com'));
+    assert.ok(savedComp);
+    const savedDms = storage.getDecisionMakers().filter(d => d.companyId === savedComp.id);
+    assert.ok(savedDms.length > 0);
+  });
+
+  // TEST 21: Autonomous Web Directory Lead Generator
+  test('Requirement: Autonomous web directory generator creates merchant leads for Go Extra Mile acquisition', async () => {
+    const leads = await websiteFetcher.autoDiscoverFromWebDirectory(1, 'all');
+    assert.strictEqual(leads.length, 1);
+    assert.strictEqual(leads[0].success, true);
+    assert.ok(leads[0].company.name);
+    assert.ok(leads[0].decisionMakers.length > 0);
   });
 
   console.log(`\n========================================`);

@@ -1784,3 +1784,169 @@ function showToast(message, type = 'info') {
   }, 3500);
 }
 
+// ==========================================
+// AUTOMATIC WEBSITE LEAD FETCHER & CRAWLER
+// ==========================================
+function openFetchWebsiteModal() {
+  const modal = document.getElementById('modalFetchWebsite');
+  if (!modal) return;
+  document.getElementById('webFetchUrlInput').value = '';
+  document.getElementById('webFetchProgressBox').classList.add('hidden');
+  document.getElementById('webFetchResultCard').classList.add('hidden');
+  modal.classList.remove('hidden');
+}
+
+function closeFetchWebsiteModal() {
+  const modal = document.getElementById('modalFetchWebsite');
+  if (modal) modal.classList.add('hidden');
+}
+
+function quickFillWebsite(domain) {
+  const input = document.getElementById('webFetchUrlInput');
+  if (input) input.value = domain;
+}
+
+function quickFillAndFetch(domain) {
+  openFetchWebsiteModal();
+  quickFillWebsite(domain);
+  executeFetchFromWebsite();
+}
+
+function quickFetchFromDashboard() {
+  const url = document.getElementById('dashQuickWebUrl')?.value.trim();
+  if (!url) {
+    showToast('Please enter a website URL or domain name.', 'error');
+    return;
+  }
+  openFetchWebsiteModal();
+  document.getElementById('webFetchUrlInput').value = url;
+  executeFetchFromWebsite();
+}
+
+async function executeFetchFromWebsite() {
+  const input = document.getElementById('webFetchUrlInput');
+  const url = input?.value.trim();
+  if (!url) {
+    showToast('Please enter a website URL or domain name.', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('btnExecuteWebFetch');
+  const progressBox = document.getElementById('webFetchProgressBox');
+  const logList = document.getElementById('webFetchLogList');
+  const statusText = document.getElementById('webFetchStatusText');
+  const resultCard = document.getElementById('webFetchResultCard');
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Crawling...';
+  progressBox.classList.remove('hidden');
+  resultCard.classList.add('hidden');
+  logList.innerHTML = '';
+  statusText.textContent = 'Connecting...';
+  statusText.className = 'text-amber-400 font-bold';
+
+  const appendLog = (msg, cls = 'text-slate-300') => {
+    const div = document.createElement('div');
+    div.className = cls;
+    div.textContent = msg;
+    logList.appendChild(div);
+    logList.scrollTop = logList.scrollHeight;
+  };
+
+  appendLog(`[1/5] Initiating web crawler session for "${url}"...`);
+
+  try {
+    const res = await fetch(`${API_BASE}/leads/fetch-from-website`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, autoSave: true })
+    });
+
+    const json = await res.json();
+
+    if (!json.success) {
+      statusText.textContent = 'Failed';
+      statusText.className = 'text-rose-400 font-bold';
+      appendLog(`[ERROR] ${json.error || 'Failed to crawl website.'}`, 'text-rose-400');
+      showToast(json.error || 'Failed to crawl website', 'error');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Fetch & Generate Lead';
+      return;
+    }
+
+    // Display logs from server
+    if (json.logs && Array.isArray(json.logs)) {
+      for (const log of json.logs) {
+        appendLog(log, log.includes('[ERROR]') ? 'text-rose-400' : log.includes('[Database]') ? 'text-emerald-300 font-bold' : 'text-slate-300');
+      }
+    }
+
+    statusText.textContent = 'Lead Generated!';
+    statusText.className = 'text-emerald-400 font-bold';
+
+    // Populate Extracted Result Card
+    const comp = json.company;
+    const dm = (json.decisionMakers && json.decisionMakers.length > 0) ? json.decisionMakers[0] : null;
+
+    if (comp) {
+      document.getElementById('resCompName').textContent = comp.name || comp.companyName;
+      document.getElementById('resCompMeta').textContent = `${comp.industry || 'Merchant'} • ${comp.city || 'Pan-India'}`;
+      document.getElementById('resCompUrl').textContent = comp.website || `https://${comp.domain}`;
+    }
+
+    if (dm) {
+      document.getElementById('resDmName').textContent = dm.fullName;
+      document.getElementById('resDmRole').textContent = `${dm.designation} (${dm.priorityLabel || 'Tier 1'})`;
+      document.getElementById('resDmPhone').textContent = dm.phone || 'Direct phone verified';
+      document.getElementById('resDmEmail').textContent = dm.email || 'Email verified';
+      document.getElementById('resLeadTierBadge').textContent = `Tier ${dm.priorityTier}: ${dm.designation}`;
+
+      // Set up Call Now button
+      const btnCall = document.getElementById('btnResCallNow');
+      btnCall.onclick = () => {
+        closeFetchWebsiteModal();
+        triggerCallModal(dm.id);
+      };
+
+      // Set up Email Proposal button
+      const btnEmail = document.getElementById('btnResEmailProposal');
+      btnEmail.onclick = () => {
+        closeFetchWebsiteModal();
+        openEmailProposalModal(dm.id);
+      };
+    }
+
+    resultCard.classList.remove('hidden');
+    showToast(`Lead generated successfully for ${comp.name || comp.companyName}!`, 'success');
+    await refreshAllData();
+  } catch (err) {
+    statusText.textContent = 'Error';
+    statusText.className = 'text-rose-400 font-bold';
+    appendLog(`[ERROR] ${err.message}`, 'text-rose-400');
+    showToast('Crawler error: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Fetch & Generate Lead';
+  }
+}
+
+async function triggerAutonomousWebCrawl(count = 2, category = 'all') {
+  try {
+    showToast(`Autonomous Web Crawler discovering ${count} merchant websites...`, 'info');
+    const res = await fetch(`${API_BASE}/leads/auto-crawl-web`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ count, category })
+    });
+    const json = await res.json();
+    if (json.success) {
+      showToast(json.message || `Crawled and generated ${json.count} leads!`, 'success');
+      await refreshAllData();
+    } else {
+      showToast(json.error || 'Failed to crawl web directory', 'error');
+    }
+  } catch (err) {
+    showToast('Auto-crawl error: ' + err.message, 'error');
+  }
+}
+

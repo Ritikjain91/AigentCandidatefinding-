@@ -5,6 +5,7 @@ const dmService = require('../services/decisionMakerService');
 const researchService = require('../services/researchService');
 const referralService = require('../services/referralService');
 const callingService = require('../services/callingService');
+const websiteFetcher = require('../services/websiteFetcherService');
 
 // ==========================================
 // SETTINGS & CONFIGURATION
@@ -261,6 +262,41 @@ router.put('/leads/replenish-config', (req, res) => {
     res.json({ success: true, message: 'Auto-replenish configuration updated.', data: updated.autoReplenish });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// ==========================================
+// AUTOMATIC WEBSITE LEAD FETCHER & CRAWLER
+// ==========================================
+
+// Automatically fetch any website, extract company & decision-makers, and generate lead
+router.post('/leads/fetch-from-website', async (req, res) => {
+  try {
+    const { url, autoSave } = req.body;
+    if (!url) {
+      return res.status(400).json({ success: false, error: 'Please enter a website URL or domain name.' });
+    }
+    const result = await websiteFetcher.fetchWebsiteAndGenerateLead(url, { autoSave: autoSave !== false });
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// Autonomous web directory crawler to discover and generate merchant leads
+router.post('/leads/auto-crawl-web', async (req, res) => {
+  try {
+    const count = parseInt(req.body.count || 3, 10);
+    const category = req.body.category || 'all';
+    const results = await websiteFetcher.autoDiscoverFromWebDirectory(count, category);
+    res.json({
+      success: true,
+      count: results.length,
+      data: results,
+      message: `Successfully crawled web directory and generated ${results.length} merchant leads!`
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
