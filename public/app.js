@@ -349,14 +349,6 @@ async function executeShareAction(channel) {
     showToast('Network error: ' + err.message, 'error');
   }
 }
-      window.open(json.data.shareLinks.whatsappUrl, '_blank');
-    } else {
-      window.location.href = json.data.shareLinks.mailtoUrl;
-    }
-  } catch (err) {
-    showToast('Network error: ' + err.message, 'error');
-  }
-}
 
 // ==========================================
 // RENDERING DECISION MAKERS
@@ -2257,7 +2249,8 @@ function executeAiSearchFromDashboard() {
   const input = document.getElementById('dashAiQueryInput');
   const query = input?.value.trim();
   if (!query) {
-    showToast('Please enter a company name or query.', 'error');
+    // If input is empty, directly perform 1-Click Auto-Search!
+    executeOneClickDiscovery();
     return;
   }
   openAiSearchModal();
@@ -2422,17 +2415,28 @@ async function executeAiCompanySearch() {
 // 1-CLICK INSTANT SEARCH & DISCOVERY ENGINE (SMALL • DOMESTIC • BIG ENTERPRISES)
 // ==========================================
 let currentOneClickScale = 'all';
+let autoSearchLoopInterval = null;
 
 function setOneClickScale(scale) {
   currentOneClickScale = scale;
   const scales = ['all', 'small', 'mid', 'big'];
   scales.forEach(s => {
     const btn = document.getElementById(`scaleChip-${s}`);
+    const dashBtn = document.getElementById(`dashScaleChip-${s}`);
+
     if (btn) {
       if (s === scale) {
         btn.className = 'scale-chip active-scale-chip bg-amber-500 text-slate-950 font-bold text-[11px] px-3 py-1 rounded-lg transition shadow-sm';
       } else {
         btn.className = 'scale-chip bg-slate-900 hover:bg-slate-700 text-slate-300 font-medium text-[11px] px-3 py-1 rounded-lg border border-slate-700 transition';
+      }
+    }
+
+    if (dashBtn) {
+      if (s === scale) {
+        dashBtn.className = 'scale-chip active-scale-chip bg-amber-500 text-slate-950 font-bold text-[11px] px-2.5 py-0.5 rounded-lg transition shadow-sm';
+      } else {
+        dashBtn.className = 'scale-chip bg-slate-900 hover:bg-slate-700 text-slate-300 font-medium text-[11px] px-2.5 py-0.5 rounded-lg border border-slate-700 transition';
       }
     }
   });
@@ -2443,6 +2447,36 @@ function setOneClickScale(scale) {
     else if (scale === 'mid') label.innerText = '1-Click Auto-Search Mid-Sized Domestic Brand';
     else if (scale === 'big') label.innerText = '1-Click Auto-Search Big National Enterprise';
     else label.innerText = '1-Click Auto-Search Next Company';
+  }
+}
+
+function toggleContinuousAutoSearch() {
+  const btn = document.getElementById('btnAutoSearchLoop');
+  const dot = document.getElementById('loopDot');
+  const label = document.getElementById('loopLabel');
+
+  if (autoSearchLoopInterval) {
+    // Turn off
+    clearInterval(autoSearchLoopInterval);
+    autoSearchLoopInterval = null;
+
+    if (dot) dot.className = 'w-2 h-2 rounded-full bg-slate-500';
+    if (label) label.innerText = 'Auto-Search Loop: OFF';
+    if (btn) btn.className = 'bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs px-3 py-2 rounded-lg transition flex items-center gap-2 border border-slate-700 shadow-sm';
+    showToast('Continuous Auto-Search Loop stopped.', 'info');
+  } else {
+    // Turn on
+    if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-ping';
+    if (label) label.innerText = 'Auto-Search: ACTIVE (8s)';
+    if (btn) btn.className = 'bg-emerald-600/30 hover:bg-emerald-600/40 text-emerald-300 font-bold text-xs px-3 py-2 rounded-lg transition flex items-center gap-2 border border-emerald-500/50 shadow-sm';
+    showToast('Continuous Auto-Search Loop ACTIVE: Auto-discovering companies every 8s!', 'success');
+
+    // Run first discovery immediately
+    executeOneClickDiscovery();
+
+    autoSearchLoopInterval = setInterval(() => {
+      executeOneClickDiscovery();
+    }, 8000);
   }
 }
 
@@ -2491,8 +2525,12 @@ async function executeOneClickDiscoveryBatch(count = 3) {
 }
 
 function renderOneClickLatestCard(item) {
-  const card = document.getElementById('oneClickLatestCard');
-  if (!card) return;
+  const cards = [
+    document.getElementById('oneClickLatestCard'),
+    document.getElementById('oneClickLatestCardDash')
+  ].filter(Boolean);
+
+  if (cards.length === 0) return;
 
   const comp = item.company;
   const dm = item.decisionMaker;
@@ -2503,7 +2541,7 @@ function renderOneClickLatestCard(item) {
       ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
       : 'bg-blue-500/20 text-blue-300 border-blue-500/40';
 
-  card.innerHTML = `
+  const html = `
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div class="space-y-1">
         <div class="flex items-center gap-2">
@@ -2536,6 +2574,9 @@ function renderOneClickLatestCard(item) {
     </div>
   `;
 
-  card.classList.remove('hidden');
+  cards.forEach(c => {
+    c.innerHTML = html;
+    c.classList.remove('hidden');
+  });
 }
 

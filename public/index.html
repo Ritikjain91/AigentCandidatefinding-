@@ -177,35 +177,67 @@
             <div class="flex items-center gap-2">
               <span class="w-2.5 h-2.5 rounded-full bg-purple-400 animate-pulse"></span>
               <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                <i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i> AI Company Search & Autonomous Lead Discovery
+                <i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i> Auto-Search & Autonomous Lead Discovery
               </h3>
-              <span id="dashAiBadge" class="text-[10px] bg-purple-500/20 text-purple-300 font-semibold px-2 py-0.5 rounded border border-purple-500/30">AI Active</span>
+              <span id="dashAiBadge" class="text-[10px] bg-purple-500/20 text-purple-300 font-semibold px-2 py-0.5 rounded border border-purple-500/30">Auto-Search Active</span>
             </div>
-            <p class="text-xs text-slate-300">Search any company name or query (e.g. <em>"Lenskart"</em>, <em>"boAt Lifestyle"</em>, <em>"Haldiram's"</em>, or <em>"Top fashion brands in Mumbai"</em>). The AI identifies the business, discovers verified decision-makers, and tailors the Go Extra Mile merchant pitch.</p>
+            <p class="text-xs text-slate-300">Search any company across India (Small Domestic Shops, Mid-Sized Brands, or Big National Enterprises). Click <strong>"1-Click Auto-Search"</strong> to instantly discover fresh decision-makers, or enable <strong>"Continuous Auto-Search Loop"</strong> to generate leads automatically on autopilot!</p>
           </div>
-          <div class="flex items-center gap-2 shrink-0">
-            <button onclick="openAiSearchModal()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 text-white font-bold text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow-md shadow-purple-500/20">
-              <i class="fa-solid fa-brain"></i> AI Research Terminal
+          <div class="flex flex-wrap items-center gap-2 shrink-0">
+            <button onclick="executeOneClickDiscovery()" class="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 text-slate-950 font-extrabold text-xs px-4 py-2 rounded-lg transition flex items-center gap-1.5 shadow-md shadow-amber-500/25">
+              <i class="fa-solid fa-bolt"></i> 1-Click Auto-Search
             </button>
-            <button onclick="openFetchWebsiteModal()" class="bg-slate-800 hover:bg-slate-700 text-amber-300 font-semibold text-xs px-3.5 py-2 rounded-lg border border-amber-500/30 transition flex items-center gap-1.5">
-              <i class="fa-solid fa-globe"></i> Website URL Mode
+            <button onclick="toggleContinuousAutoSearch()" id="btnAutoSearchLoop" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs px-3 py-2 rounded-lg transition flex items-center gap-2 border border-slate-700 shadow-sm">
+              <span class="w-2 h-2 rounded-full bg-slate-500" id="loopDot"></span> <span id="loopLabel">Auto-Search Loop: OFF</span>
+            </button>
+            <button onclick="openAiSearchModal()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 text-white font-bold text-xs px-3 py-2 rounded-lg transition flex items-center gap-1.5 shadow-md shadow-purple-500/20">
+              <i class="fa-solid fa-brain"></i> AI Terminal
             </button>
           </div>
         </div>
 
-        <!-- Search Input Bar -->
+        <!-- Scale Category Filter Chips on Dashboard -->
+        <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span class="text-[11px] text-slate-400 font-semibold mr-1">Scale:</span>
+            <button type="button" onclick="setOneClickScale('all')" id="dashScaleChip-all" class="scale-chip active-scale-chip bg-amber-500 text-slate-950 font-bold text-[11px] px-2.5 py-0.5 rounded-lg transition shadow-sm">
+              ✨ All Scales
+            </button>
+            <button type="button" onclick="setOneClickScale('small')" id="dashScaleChip-small" class="scale-chip bg-slate-900 hover:bg-slate-700 text-slate-300 font-medium text-[11px] px-2.5 py-0.5 rounded-lg border border-slate-700 transition">
+              🏪 Small Domestic Shops
+            </button>
+            <button type="button" onclick="setOneClickScale('mid')" id="dashScaleChip-mid" class="scale-chip bg-slate-900 hover:bg-slate-700 text-slate-300 font-medium text-[11px] px-2.5 py-0.5 rounded-lg border border-slate-700 transition">
+              🏢 Mid-Sized Brands
+            </button>
+            <button type="button" onclick="setOneClickScale('big')" id="dashScaleChip-big" class="scale-chip bg-slate-900 hover:bg-slate-700 text-slate-300 font-medium text-[11px] px-2.5 py-0.5 rounded-lg border border-slate-700 transition">
+              🏬 Big Enterprises
+            </button>
+          </div>
+
+          <div class="text-[11px] text-emerald-400 font-mono flex items-center gap-1.5">
+            <i class="fa-solid fa-sparkles text-amber-400"></i>
+            <span>Guaranteed Different (No Duplicates)</span>
+          </div>
+        </div>
+
+        <!-- Search Input Bar & Quick Buttons -->
         <div class="flex flex-col sm:flex-row gap-2">
           <div class="relative flex-1">
             <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-purple-400 text-xs"></i>
-            <input type="text" id="dashAiQueryInput" onkeydown="if(event.key==='Enter') executeAiSearchFromDashboard()" placeholder="Ask AI to search any company (e.g. Lenskart, boAt Lifestyle, Mamaearth, or 'Organic tea brands')..." class="w-full bg-slate-950 border border-slate-700 text-xs rounded-xl pl-9 pr-3 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-purple-500 font-medium">
+            <input type="text" id="dashAiQueryInput" onkeydown="if(event.key==='Enter') executeAiSearchFromDashboard()" placeholder="Type company name or leave blank & click search to auto-discover..." class="w-full bg-slate-950 border border-slate-700 text-xs rounded-xl pl-9 pr-3 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-purple-500 font-medium">
           </div>
           <button onclick="executeAiSearchFromDashboard()" id="btnDashAiSearch" class="bg-gradient-to-r from-purple-600 via-indigo-600 to-amber-500 hover:from-purple-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-purple-600/20 shrink-0">
-            <i class="fa-solid fa-robot"></i> AI Search Company
+            <i class="fa-solid fa-bolt text-amber-300"></i> Auto-Search Company
           </button>
         </div>
 
+        <!-- Latest Discovered Result Card Container on Dashboard -->
+        <div id="oneClickLatestCardDash" class="hidden bg-slate-950/90 border border-amber-500/40 rounded-xl p-3.5 space-y-2 animate-scale-in">
+          <!-- Populated by JavaScript on click -->
+        </div>
+
         <!-- Quick click suggestions -->
-        <div class="flex flex-wrap items-center gap-1.5 text-xs pt-0.5">
+        <div class="flex flex-wrap items-center gap-1.5 text-xs pt-0.5 border-t border-slate-800/60">
           <span class="text-slate-400 text-[11px]"><i class="fa-solid fa-sparkles text-purple-400"></i> Trending AI Targets:</span>
           <button type="button" onclick="quickFillAndSearchAi('Lenskart')" class="text-slate-300 hover:text-purple-300 text-[11px] bg-slate-800/80 hover:bg-slate-700 px-2.5 py-0.5 rounded border border-slate-700 transition">Lenskart</button>
           <button type="button" onclick="quickFillAndSearchAi('boAt Lifestyle')" class="text-slate-300 hover:text-purple-300 text-[11px] bg-slate-800/80 hover:bg-slate-700 px-2.5 py-0.5 rounded border border-slate-700 transition">boAt Lifestyle</button>
