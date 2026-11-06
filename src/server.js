@@ -32,10 +32,15 @@ app.use((req, res, next) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Unhandled server error:', err);
-  res.status(500).json({
+  const status = err.status || err.statusCode || 500;
+  if (status >= 500) {
+    console.error('Unhandled server error:', err);
+  } else {
+    console.warn(`[Client Error ${status}]:`, err.message);
+  }
+  res.status(status).json({
     success: false,
-    error: err.message || 'Internal Server Error'
+    error: err.message || 'Server Error'
   });
 });
 
