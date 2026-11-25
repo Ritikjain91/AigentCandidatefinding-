@@ -94,9 +94,13 @@
     ]
   },
   "telephony": {
-    "provider": "twilio",
-    "twilioAccountSid": "YOUR_TWILIO_ACCOUNT_SID",
-    "twilioAuthToken": "YOUR_TWILIO_AUTH_TOKEN",
-    "twilioPhoneNumber": "YOUR_TWILIO_PHONE_NUMBER"
+    "provider": "",
+    "twilioAccountSid": "",
+    "twilioAuthToken": "",
+    "twilioPhoneNumber": "",
+    "exotelSid": "",
+    "exotelToken": "",
+    "exotelApiKey": "",
+    "exotelCallerId": ""
   }
 }
